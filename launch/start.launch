@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+
+    <node pkg="ks114_sonar" name="ks114_sonar" type="ks114_sonar" output="screen">
+        <rosparam command="load" file="$(find ks114_sonar)/config/params.yaml"/>
+    </node>
+ 
+</launch>
