@@ -1,4 +1,4 @@
 #serial_port: /dev/serial3by-id/usb-FTDI_FT232R_USB_UART_AB0LYXFN-if00-port0
-num_of_sonar: 4
+num_of_sonar: 1
 serial_port: "/dev/ttyUSB0"
 serial_baud_rate: 115200

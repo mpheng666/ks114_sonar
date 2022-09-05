@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include "ks114.hpp"
+#include "ks114/ks114.hpp"
 #include <unistd.h>
 
 unsigned int microseconds = 50000;

@@ -1,4 +1,4 @@
-#include "ks114.hpp"
+#include "ks114/ks114.hpp"
 
 namespace ks114_ns
 {
