@@ -1,5 +1,5 @@
-#ifndef KS114_DRIVER_HPP
-#define KS114_DRIVER_HPP
+#ifndef KS114_SONAR_KS114_DRIVER_HPP
+#define KS114_SONAR_KS114_DRIVER_HPP
 
 // #define DEBUG_
 
@@ -29,7 +29,7 @@ namespace ks114_ns
         ros::Publisher ks114_sonar_auxi_pub_;
         std_msgs::Float32MultiArray ks114_sonar_raw_msg_;
         std_msgs::Float32MultiArray ks114_sonar_auxi_msg_;
-        const double LOOP_RATE = 25;
+        static constexpr double LOOP_RATE {25};
 
         // Serial port
         enum PortState
@@ -40,29 +40,34 @@ namespace ks114_ns
         };
 
         PortState _currState = PortUnopened;
-        const std::string DEFAULT_PORT = "/dev/ttyUSB0";
-        const int DEFAULT_BAUDRATE = 115200;
-        const uint32_t PORT_TIMEOUT_MS = 1000;
+        static constexpr char DEFAULT_PORT[] {"/dev/ttyUSB0"};
+        static constexpr int DEFAULT_BAUDRATE {115200};
+        static constexpr uint32_t PORT_TIMEOUT_MS {1000};
         std::string port_;
         int baud_rate_;
         serial::Serial ser_;
 
         // Sonar
-        const uint8_t sensor_address[20] = {0XD0, 0XD2, 0XD4, 0XD6, 0XD8, 0XDA, 0XDC, 0XDE, 0XE0, 0XE2, 0XE4, 0XE6, 0XE8, 0XEA, 0XEC, 0XEE, 0XF8, 0XFA, 0XFC, 0XFE};
-        const int DEFAULT_NUM = 8;
+        static constexpr uint8_t sensor_address[20] 
+        {
+            0XD0, 0XD2, 0XD4, 0XD6, 0XD8, 0XDA, 0XDC, 0XDE, 
+            0XE0, 0XE2, 0XE4, 0XE6, 0XE8, 0XEA, 0XEC, 0XEE, 
+            0XF8, 0XFA, 0XFC, 0XFE
+        };
+        static constexpr int DEFAULT_NUM {8};
         int num_of_sonar_;
         bool check_flag_ = false;
         std::vector<float> ks114_distance_data_;
-        const float range_min_ = 3;
-        const float range_max_ = 105;
-        const float range_error_ = 600.00000000000000000000;
+        static constexpr double range_min_ {3.0};
+        static constexpr double range_max_ {105.0};
+        static constexpr double range_error_ {600.0};
 
         // Auxi
-        int auxi_size_ = 8;
-        float auxi_ignored_data_ = 5.0;
+        static constexpr int auxi_size_ {8};
+        static constexpr double auxi_ignored_data_ {5.0};
 
         void loadParam();
-        bool openSerial();
+        bool openSerial(const char* port, const int baudrate);
         void getSensorInfo(uint8_t);
         void checkSensorInfo(int);
         void sendReadCmd(uint8_t);

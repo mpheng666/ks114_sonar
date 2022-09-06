@@ -32,7 +32,7 @@ namespace ks114_ns
         }
         if (!ros::param::param<std::string>("/ks114_sonar/serial_port", port_, DEFAULT_PORT))
         {
-            ROS_WARN("Sonar serial port is not set. Using %s as default", DEFAULT_PORT.c_str());
+            ROS_WARN("Sonar serial port is not set. Using %s as default", DEFAULT_PORT);
         }
         if (!ros::param::param<int>("/ks114_sonar/serial_baud_rate", baud_rate_, DEFAULT_BAUDRATE))
         {
@@ -40,7 +40,7 @@ namespace ks114_ns
         }
     }
 
-    bool SonarKs114::openSerial()
+    bool SonarKs114::openSerial(const char* port, const int baudrate)
     {
 
         if (_currState == PortUnopened)
@@ -96,7 +96,7 @@ namespace ks114_ns
             } 
             else if (_currState == PortUnopened)
             {
-                this->openSerial();
+                this->openSerial(port_.c_str(), baud_rate_);
             }
             else if (_currState == PortOpened && check_flag_ == false)
             {

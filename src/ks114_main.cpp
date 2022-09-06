@@ -1,9 +1,9 @@
 #include <ros/ros.h>
 #include "ks114/ks114.hpp"
 
-const std::string ROS_NODE = "ks114_sonar_node";
-const std::string PUB_TOPIC_RAW = "ks114_sonar_data_raw";
-const std::string PUB_TOPIC_AUXI = "ks114_sonar_data_auxi";
+static constexpr char ROS_NODE[] {"ks114_sonar_node"};
+static constexpr char PUB_TOPIC_RAW[] {"ks114_sonar_data_raw"};
+static constexpr char PUB_TOPIC_AUXI[] {"ks114_sonar_data_auxi"};
 
 int main(int argc, char **argv)
 {
