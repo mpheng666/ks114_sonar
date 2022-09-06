@@ -3,29 +3,25 @@
 namespace ks114_ns
 {
 
-    SonarKs114::SonarKs114(std::string PUB_TOPIC_RAW, std::string PUB_TOPIC_AUXI)
-        : private_nh_("~"),
-          ks114_sonar_raw_pub_(relative_nh_.advertise<std_msgs::Float32MultiArray>(PUB_TOPIC_RAW, 10)),
-          ks114_sonar_auxi_pub_(relative_nh_.advertise<std_msgs::Float32MultiArray>(PUB_TOPIC_AUXI, 10))
+    SonarKs114::SonarKs114(ros::NodeHandle& nh)
+        : ks114_sonar_data_pub_(nh.advertise<std_msgs::Float32MultiArray>("sonar_data", 10)),
+          ks114_sonar_auxi_pub_(nh.advertise<std_msgs::Float32MultiArray>("sonar_auxi", 10))
     {
-        loadParam();
-        ROS_INFO("ks114_node initiated!");
         ks114_sonar_raw_msg_.data.resize(num_of_sonar_, 0);
         ks114_sonar_auxi_msg_.data.resize(auxi_size_, 0);
     }
 
     SonarKs114::SonarKs114()
     {
-        ROS_INFO("ks114_node default initiated!");
     }
 
     SonarKs114::~SonarKs114()
     {
-        ;
     }
 
     void SonarKs114::loadParam()
     {
+        // Add detect mode param
         if (!ros::param::param<int>("/ks114_sonar/num_of_sonar", num_of_sonar_, DEFAULT_NUM))
         {
             ROS_WARN("Number of sonar is not set. Using %u as default", DEFAULT_NUM);
@@ -43,32 +39,32 @@ namespace ks114_ns
     bool SonarKs114::openSerial(const char* port, const int baudrate)
     {
 
-        if (_currState == PortUnopened)
+        if (port_state_ == PortState::PortUnopened)
         {
             try
             {
-                ser_.setPort(port_);
-                ser_.setBaudrate(baud_rate_);
-                serial::Timeout to = serial::Timeout::simpleTimeout(PORT_TIMEOUT_MS);
-                ser_.setTimeout(to);
+                ser_.setPort(port);
+                ser_.setBaudrate(baudrate);
+                auto timeout = serial::Timeout::simpleTimeout(PORT_TIMEOUT_MS);
+                ser_.setTimeout(timeout);
                 ser_.open();
             }
             catch (serial::IOException &e)
             {
                 ROS_ERROR_STREAM("Unable to open port ");
-                _currState = PortErrored;
+                port_state_ = PortState::PortErrored;
                 return false;
             }
 
             if (ser_.isOpen())
             {
                 ROS_INFO_STREAM("Serial Port initialized");
-                _currState = PortOpened;
+                port_state_ = PortState::PortOpened;
                 return true;
             }
             else
             {
-                _currState = PortUnopened;
+                port_state_ = PortState::PortUnopened;
                 return false;
             }
         }
@@ -76,14 +72,14 @@ namespace ks114_ns
 
     void SonarKs114::startProcess()
     {
-        // Set ROS sleep rate
+        this->loadParam();
         ros::Rate r(LOOP_RATE);
         ros::Rate r2(5);
         uint32_t distance_;
 
-        while (private_nh_.ok())
+        while (ros::ok())
         {
-            if (_currState == PortOpened && check_flag_ == true)
+            if (port_state_ == PortState::PortOpened && check_flag_ == true)
             {
                 for (int i = 0; i < num_of_sonar_; i++)
                 {
@@ -94,11 +90,11 @@ namespace ks114_ns
                 this->pubSensorData();
                 ks114_distance_data_.clear();
             } 
-            else if (_currState == PortUnopened)
+            else if (port_state_ == PortState::PortUnopened)
             {
                 this->openSerial(port_.c_str(), baud_rate_);
             }
-            else if (_currState == PortOpened && check_flag_ == false)
+            else if (port_state_ == PortState::PortOpened && check_flag_ == false)
             {
                 for (int i = 0; i < num_of_sonar_; i++)
                 {
