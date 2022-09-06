@@ -11,12 +11,14 @@
 #include <std_msgs/Int32MultiArray.h>
 #include <std_msgs/Float32MultiArray.h>
 
+#include <sensor_msgs/Range.h>
+
 namespace ks114_ns
 {
     class SonarKs114
     {
     public:
-        SonarKs114(std::string, std::string);
+        explicit SonarKs114(ros::NodeHandle& nh);
         SonarKs114();
         ~SonarKs114();
         void startProcess();
@@ -25,21 +27,21 @@ namespace ks114_ns
         // ros
         ros::NodeHandle private_nh_;
         ros::NodeHandle relative_nh_;
-        ros::Publisher ks114_sonar_raw_pub_;
+        ros::Publisher ks114_sonar_data_pub_;
         ros::Publisher ks114_sonar_auxi_pub_;
         std_msgs::Float32MultiArray ks114_sonar_raw_msg_;
         std_msgs::Float32MultiArray ks114_sonar_auxi_msg_;
         static constexpr double LOOP_RATE {25};
 
         // Serial port
-        enum PortState
+        enum class PortState
         {
             PortUnopened,
             PortOpened,
             PortErrored
         };
 
-        PortState _currState = PortUnopened;
+        PortState port_state_ = PortState::PortUnopened;
         static constexpr char DEFAULT_PORT[] {"/dev/ttyUSB0"};
         static constexpr int DEFAULT_BAUDRATE {115200};
         static constexpr uint32_t PORT_TIMEOUT_MS {1000};
@@ -61,6 +63,9 @@ namespace ks114_ns
         static constexpr double range_min_ {3.0};
         static constexpr double range_max_ {105.0};
         static constexpr double range_error_ {600.0};
+        static constexpr int get_info_command[2] {0x20, 0x99};
+        static constexpr int detect_fast_command[2] {0x20, 0x0F};
+        static constexpr int detect_normal_command[2] {0x20, 0xB0};
 
         // Auxi
         static constexpr int auxi_size_ {8};

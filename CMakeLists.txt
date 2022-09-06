@@ -33,7 +33,7 @@ pkg_check_modules (SERIAL REQUIRED serial)
 include_directories(${SERIAL_INCLUDE_DIRS})
 link_directories(${SERIAL_LIBRARY_DIRS})
 
-set(SOURCES1 src/ks114_main.cpp src/ks114.cpp)
+set(SOURCES1 src/ks114_node.cpp src/ks114.cpp)
 set(SOURCES2 src/ks114_utility.cpp)
 
 add_executable(ks114_sonar ${SOURCES1})
