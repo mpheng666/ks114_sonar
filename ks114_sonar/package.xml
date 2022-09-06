@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>ks114_sonar</name>
+    <version>0.1.0</version>
+    <description>
+        This package provides ks114 sonar driver, ROS wrapper, filtering function
+    </description>
+    <maintainer email="mpheng96@gmail.com">Heng Meng Pei</maintainer>
+    <license>BSD</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <exec_depend>ks114_driver</exec_depend>
+    <exec_depend>ks114-ros-wrapper</exec_depend>
+    <exec_depend>ks114-ros-simulation</exec_depend>
+    <exec_depend>sensor_filter</exec_depend>
+
+    <export>
+        <metapackage />
+    </export>
+
+</package>
