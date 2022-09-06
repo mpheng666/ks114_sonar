@@ -56,7 +56,7 @@ namespace ks114_ns
         };
         static constexpr int DEFAULT_NUM {8};
         int num_of_sonar_;
-        bool check_flag_ = false;
+        bool check_flag_ {false};
         std::vector<float> ks114_distance_data_;
         static constexpr double range_min_ {3.0};
         static constexpr double range_max_ {105.0};
