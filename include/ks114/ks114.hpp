@@ -14,6 +14,8 @@
 
 #include <sensor_msgs/Range.h>
 
+#include "sensor_filters/sensor_filters.hpp"
+
 namespace ks114_ns
 {
     namespace ranges
@@ -80,6 +82,8 @@ namespace ks114_ns
         int detection_mode_param_ {0};
         DetectionMode detection_mode_ {DetectionMode::NormalDetection};
         double detection_rate_ {10.0};
+
+        sensor_filters_ns::LowPassFilter<double> low_pass_filter_;
 
         void loadParam();
         bool openSerial(const std::string port, const int baudrate);
