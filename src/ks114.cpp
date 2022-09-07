@@ -120,7 +120,7 @@ namespace ks114_ns
         std::for_each(
             SENSOR_ADDRESS.begin(), 
             SENSOR_ADDRESS.begin()+num_of_sonar_,
-            [&](auto& address)
+            [&](const auto& address)
             {
                 ser_.flushInput();
                 const uint8_t command[3] {address, 0x02, GET_INFO_COMMAND};
@@ -162,7 +162,7 @@ namespace ks114_ns
         std::for_each(
             SENSOR_ADDRESS.begin(), 
             SENSOR_ADDRESS.begin()+num_of_sonar_,
-            [&](auto& address)
+            [&](const auto& address)
             {
                 ser_.flushInput();
                 const uint8_t command[3] {address, 0x02, DETECT_FAST_COMMAND};

@@ -16,6 +16,15 @@
 
 namespace ks114_ns
 {
+    namespace ranges
+    {
+        template<typename Range, typename Function>
+        Function for_each(Range& range, Function f)
+        {
+            return std::for_each(begin(range), end(range), f);
+        }
+    }
+
     class SonarKs114
     {
     public:
@@ -65,7 +74,7 @@ namespace ks114_ns
         static constexpr double RANGE_MIN {0.03};
         static constexpr double RANGE_MAX_NORMAL {5.95};
         static constexpr double RANGE_MAX_FAST {1.05};
-        static constexpr double RANGE_ERROR {414.0};
+        static constexpr double RANGE_ERROR {404.0};
         int num_of_sonar_ {8};
         std::vector<float> ks114_distance_data_;
         int detection_mode_param_ {0};
@@ -75,6 +84,8 @@ namespace ks114_ns
         void loadParam();
         bool openSerial(const std::string port, const int baudrate);
         void initSensorsInfo();
+        void sendSerialCommand(const uint8_t command[3]);
+        void receiveSerialCommand(std::vector<uint8_t>& byte_received, const size_t size);
         bool readSensorsValue(std::vector<double>& output);
         double filterSensorsData(const double input, const DetectionMode mode);
         void pubSensorsData(const std::vector<double>& output);
