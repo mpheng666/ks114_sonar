@@ -6,9 +6,8 @@ namespace ks114_ns
     SonarKs114::SonarKs114(ros::NodeHandle& nh)
         : 
         private_nh_(nh),
-        ks114_sonar_data_pub_(nh.advertise<std_msgs::Float32MultiArray>("sonar_data", 10)),
-        ks114_sonar_auxi_pub_(nh.advertise<std_msgs::Float32MultiArray>("sonar_auxi", 10))
-        // timer_send_detection(nh.createTimer(ros::Duration(1.0/detection_rate_), &SonarKs114::readSonar, this))
+        ks114_sonar_data_pub_(nh.advertise<std_msgs::Float64MultiArray>("sonar_data", 10)),
+        i2r_auxi_pub_(nh.advertise<std_msgs::Float32MultiArray>("auxi_sonar", 10))
     {
     }
 
@@ -44,7 +43,7 @@ namespace ks114_ns
     bool SonarKs114::openSerial(const std::string port, const int baudrate)
     {
 
-        if (port_state_ == PortState::PortUnopened)
+        if (port_state_ != PortState::PortOpened)
         {
             try
             {
@@ -56,20 +55,19 @@ namespace ks114_ns
             }
             catch (const std::exception &exc)
             {
-                ROS_ERROR_STREAM("Unable to open port!" << exc.what());
+                ROS_ERROR_STREAM("Unable to open port! " << exc.what());
                 port_state_ = PortState::PortErrored;
-                return false;
             }
 
             if (ser_.isOpen())
             {
                 ROS_INFO_STREAM("Serial Port initialized");
                 port_state_ = PortState::PortOpened;
-                return true;
+                this->initSensorsInfo();
             }
         }
 
-        return false;
+        return port_state_ == PortState::PortOpened;
     }
 
     void SonarKs114::startProcess()
@@ -77,30 +75,39 @@ namespace ks114_ns
         this->loadParam();
         ros::Rate r(LOOP_RATE);
 
-        if(this->openSerial(port_.c_str(), baud_rate_))
-        {
-            this->initSensorsInfo();
-        }
-
         while (ros::ok())
         {
-            if (port_state_ == PortState::PortOpened)
+            try
             {
-                std::vector<double> sensors_output;
-                if(this->readSensorsValue(sensors_output))
+                #ifdef DEBUG
+                    ROS_INFO_STREAM("Port state: " << static_cast<int>(port_state_));
+                #endif
+                
+                if(port_state_ == PortState::PortOpened)
                 {
-                    #ifdef DEBUG
-                        for(const auto& o : sensors_output)
-                        {
-                            ROS_INFO_STREAM("output: " << o << " ");
-                        }
-                    #endif
-                    this->pubSensorsData(sensors_output);
+                    std::vector<double> sensors_output;
+                    sensors_output.resize(num_of_sonar_);
+                    if(this->readSensorsValue(sensors_output))
+                    {
+                        #ifdef DEBUG
+                            for(const auto& o : sensors_output)
+                            {
+                                ROS_INFO_STREAM("output: " << o << " ");
+                            }
+                        #endif
+                        this->pubSensorsData(sensors_output);
+                    }
                 }
-            } 
-            else if (port_state_ == PortState::PortUnopened || port_state_ == PortState::PortErrored)
+                else
+                {
+                    this->openSerial(port_, baud_rate_);
+                }
+            }
+            catch (const std::exception &exc)
             {
-                this->openSerial(port_.c_str(), baud_rate_);
+                ROS_ERROR_STREAM("Unable to open port!" << exc.what());
+                port_state_ = PortState::PortErrored;
+                this->openSerial(port_, baud_rate_);
             }
             r.sleep();
             ros::spinOnce();
@@ -170,7 +177,7 @@ namespace ks114_ns
                     ser_.read(byte_received, 2);
                     auto value_in_byte = static_cast<uint16_t>(byte_received[0] << 8 | byte_received[1]);
                     auto value_in_m = static_cast<float>(value_in_byte)/5800.0;
-                    output.push_back(this->filterSensorsData(value_in_m, detection_mode_));
+                    output.at(index) = (this->filterSensorsData(value_in_m, detection_mode_));
 
                     #ifdef DEBUG
                         for(const auto& b : byte_received)
@@ -182,20 +189,15 @@ namespace ks114_ns
                 }
                 else
                 {
+                    output.at(index) = (RANGE_ERROR);
                     ROS_ERROR("Sonar %d is NOT CONNECTED!", index);
                 }
                 ++index;
                 byte_received.clear();
             }
         );
-        if(output.size() > 0)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+
+        return output.size() > 0 ? true : false;
     }
 
     double SonarKs114::filterSensorsData(const double input, const DetectionMode mode)
@@ -218,23 +220,13 @@ namespace ks114_ns
 
     void SonarKs114::pubSensorsData(const std::vector<double>& output)
     {
-        // assert(output.size() == num_of_sonar_);
         std_msgs::Float64MultiArray sonar_msg;
-        sonar_msg.data.resize(num_of_sonar_, 0);
-        // std::copy(ks114_distance_data_.begin(), ks114_distance_data_.end(), ks114_sonar_raw_msg_.data.begin());
-        // sonar_msg.data = std::move(output);
-        std::copy(output.begin(), output.end(), sonar_msg.data.begin());
+        std_msgs::Float32MultiArray i2r_auxi_msg;
+        sonar_msg.data = std::move(output);
+        std::copy(sonar_msg.data.begin(), sonar_msg.data.end(),std::back_inserter(i2r_auxi_msg.data));
+        if(output.size() != sonar_msg.data.size()) return;
         ks114_sonar_data_pub_.publish(sonar_msg);
-
-        // ks114_sonar_auxi_msg_.data[0] = ks114_distance_data_[0];
-        // ks114_sonar_auxi_msg_.data[1] = ks114_distance_data_[1];
-        // ks114_sonar_auxi_msg_.data[2] = ks114_distance_data_[2];
-        // ks114_sonar_auxi_msg_.data[3] = ks114_distance_data_[3];
-        // ks114_sonar_auxi_msg_.data[4] = ks114_distance_data_[4];
-        // ks114_sonar_auxi_msg_.data[5] = ks114_distance_data_[5];
-        // ks114_sonar_auxi_msg_.data[6] = ks114_distance_data_[6];
-        // ks114_sonar_auxi_msg_.data[7] = ks114_distance_data_[7];
-        // ks114_sonar_auxi_pub_.publish(ks114_sonar_auxi_msg_);
+        i2r_auxi_pub_.publish(i2r_auxi_msg);
     }
 
 }; // ks114_ns

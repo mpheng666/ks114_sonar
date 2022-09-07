@@ -1,7 +1,7 @@
 #ifndef _KS114_SONAR_KS114_DRIVER_HPP_
 #define _KS114_SONAR_KS114_DRIVER_HPP_
 
-#define DEBUG 
+// #define DEBUG 
 
 #include <serial/serial.h>
 #include <vector>
@@ -27,12 +27,9 @@ namespace ks114_ns
     private:
         // ros
         ros::NodeHandle private_nh_;
-        // ros::NodeHandle relative_nh_;
         ros::Publisher ks114_sonar_data_pub_;
-        ros::Publisher ks114_sonar_auxi_pub_;
-        // std_msgs::Float32MultiArray ks114_sonar_auxi_msg_;
+        ros::Publisher i2r_auxi_pub_;
         static constexpr double LOOP_RATE {25.0};
-        // ros::Timer timer_send_detection;
 
         // Serial port
         enum class PortState
@@ -68,16 +65,12 @@ namespace ks114_ns
         static constexpr double RANGE_MIN {0.03};
         static constexpr double RANGE_MAX_NORMAL {5.95};
         static constexpr double RANGE_MAX_FAST {1.05};
-        static constexpr double RANGE_ERROR {6.0};
+        static constexpr double RANGE_ERROR {414.0};
         int num_of_sonar_ {8};
         std::vector<float> ks114_distance_data_;
         int detection_mode_param_ {0};
         DetectionMode detection_mode_ {DetectionMode::NormalDetection};
         double detection_rate_ {10.0};
-
-        // Auxi
-        // static constexpr int auxi_size_ {8};
-        // static constexpr double auxi_ignored_data_ {5.0};
 
         void loadParam();
         bool openSerial(const std::string port, const int baudrate);
