@@ -95,12 +95,16 @@ namespace ks114_ns
         int detection_mode_param_ {0};
         DetectionMode detection_mode_ {DetectionMode::NormalDetection};
         double detection_rate_ {10.0};
-
-        std::map<int, bool> sonars_connection_state;
+        std::map<int, bool> sonars_connection_state_;
+        // bool is_connected_ {false};
+        std::set<int> disconnected_sensors_;
 
         void loadParam();
         bool openSerial(const std::string& port, const int baudrate);
         void initSensorsInfo();
+        void initSensorsConnectionState(std::map<int, bool>& states, const int size);
+        bool checkSensorsConnectionState(std::map<int, bool>& states);
+        bool updateSensorConnectionState(std::map<int, bool>& states, const int index, const bool state);
         void sendSerialCommand(const uint8_t command[3]);
         void receiveSerialCommand(std::vector<uint8_t>& byte_received, const size_t size);
         bool readSensorsValue(std::vector<double>& output);
