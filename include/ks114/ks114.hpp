@@ -25,6 +25,18 @@ namespace ks114_ns
         {
             return std::for_each(begin(range), end(range), f);
         }
+
+        template<typename IRange, typename ORange, typename Function>
+        Function transform(IRange& input, ORange& output, Function f)
+        {
+            return std::transform(begin(input), end(input), std::back_inserter(output), f);
+        }
+
+        // template<typename IRange, typename ORange, typename Function>
+        // Function copy(IRange& input, ORange& output)
+        // {
+        //     return std::copy(begin(input), end(output), std::back_inserter(output));
+        // }
     }
 
     class SonarKs114
@@ -39,6 +51,7 @@ namespace ks114_ns
         // ros
         ros::NodeHandle private_nh_;
         ros::Publisher ks114_sonar_data_pub_;
+        ros::Publisher ks114_fitlered_sonar_data_pub_;
         ros::Publisher i2r_auxi_pub_;
         static constexpr double LOOP_RATE {25.0};
 
@@ -83,17 +96,16 @@ namespace ks114_ns
         DetectionMode detection_mode_ {DetectionMode::NormalDetection};
         double detection_rate_ {10.0};
 
-        sensor_filters_ns::LowPassFilter<double> low_pass_filter_;
+        std::map<int, bool> sonars_connection_state;
 
         void loadParam();
-        bool openSerial(const std::string port, const int baudrate);
+        bool openSerial(const std::string& port, const int baudrate);
         void initSensorsInfo();
         void sendSerialCommand(const uint8_t command[3]);
         void receiveSerialCommand(std::vector<uint8_t>& byte_received, const size_t size);
         bool readSensorsValue(std::vector<double>& output);
-        double filterSensorsData(const double input, const DetectionMode mode);
         void pubSensorsData(const std::vector<double>& output);
-
+        double filterSensorsData(const double input);
     };
 }; //ks114_ns
 

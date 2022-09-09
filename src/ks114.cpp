@@ -7,6 +7,7 @@ namespace ks114_ns
         : 
         private_nh_(nh),
         ks114_sonar_data_pub_(nh.advertise<std_msgs::Float64MultiArray>("sonar_data", 10)),
+        ks114_fitlered_sonar_data_pub_(nh.advertise<std_msgs::Float64MultiArray>("sonar_filtered_data", 10)),
         i2r_auxi_pub_(nh.advertise<std_msgs::Float32MultiArray>("auxi_sonar", 10))
     {
     }
@@ -40,7 +41,7 @@ namespace ks114_ns
         }
     }
 
-    bool SonarKs114::openSerial(const std::string port, const int baudrate)
+    bool SonarKs114::openSerial(const std::string& port, const int baudrate)
     {
 
         if (port_state_ != PortState::PortOpened)
@@ -177,7 +178,7 @@ namespace ks114_ns
                     ser_.read(byte_received, 2);
                     auto value_in_byte = static_cast<uint16_t>(byte_received[0] << 8 | byte_received[1]);
                     auto value_in_m = static_cast<float>(value_in_byte)/5800.0;
-                    output.at(index) = (this->filterSensorsData(value_in_m, detection_mode_));
+                    output.at(index) = value_in_m;
 
                     #ifdef DEBUG
                         for(const auto& b : byte_received)
@@ -200,31 +201,47 @@ namespace ks114_ns
         return output.size() > 0 ? true : false;
     }
 
-    double SonarKs114::filterSensorsData(const double input, const DetectionMode mode)
+    double SonarKs114::filterSensorsData(const double input)
     {
-        if(mode == DetectionMode::FastDetection)
+        // const double lp_gain = 0.8;
+        // sensor_filters_ns::LowPassFilter<double> low_pass_filter_(lp_gain);
+
+        if(detection_mode_ == DetectionMode::FastDetection)
         {
-            if(input > RANGE_MIN && input < RANGE_MAX_FAST)
-                return input;
-            else 
-                return RANGE_ERROR;
+            sensor_filters_ns::ThresholdFilter<double> thres_f(RANGE_MIN, RANGE_MAX_FAST, RANGE_ERROR);
+            return thres_f.filter(input);
         }
-        else if (mode == DetectionMode::NormalDetection)
+        else if (detection_mode_ == DetectionMode::NormalDetection)
         {
-            if(input > RANGE_MIN && input < RANGE_MAX_NORMAL)
-                return input;
-            else 
-                return RANGE_ERROR;
+            sensor_filters_ns::ThresholdFilter<double> thres_f(RANGE_MIN, RANGE_MAX_NORMAL, RANGE_ERROR);
+            return thres_f.filter(input);
         }
     }
 
     void SonarKs114::pubSensorsData(const std::vector<double>& output)
     {
         std_msgs::Float64MultiArray sonar_msg;
+        std_msgs::Float64MultiArray filtered_sonar_msg;
         std_msgs::Float32MultiArray i2r_auxi_msg;
+
+        filtered_sonar_msg.data.resize(sonar_msg.data.size());
+        i2r_auxi_msg.data.resize(filtered_sonar_msg.data.size());
+
         sonar_msg.data = std::move(output);
-        std::copy(sonar_msg.data.begin(), sonar_msg.data.end(),std::back_inserter(i2r_auxi_msg.data));
-        if(output.size() != sonar_msg.data.size()) return;
+
+        for(auto i=0; i<sonar_msg.data.size(); ++i)
+        {
+            filtered_sonar_msg.data.at(i) = 
+            this->filterSensorsData(sonar_msg.data.at(i));
+        }
+
+        for(auto i=0; i<i2r_auxi_msg.data.size(); ++i)
+        {
+            i2r_auxi_msg.data.at(i) = 
+            filtered_sonar_msg.data.at(i);
+        }
+        
+        ks114_fitlered_sonar_data_pub_.publish(filtered_sonar_msg);
         ks114_sonar_data_pub_.publish(sonar_msg);
         i2r_auxi_pub_.publish(i2r_auxi_msg);
     }

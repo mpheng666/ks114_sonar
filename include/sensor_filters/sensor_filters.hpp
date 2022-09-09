@@ -6,56 +6,78 @@ namespace sensor_filters_ns{
     template<typename T>
     class ThresholdFilter{
         public:
-            explicit ThresholdFilter::ThresholdFilter(const T min, const T max):
+            ThresholdFilter(const T& min, const T& max, const T& return_value)
             :
                 min_limit_(min),
-                max_limit_(max)
+                max_limit_(max),
+                return_value_(return_value)
+            {
+            }
+
+            ~ThresholdFilter()
             {
 
             }
-            ThresholdFilter::~ThresholdFilter()
-            {
 
+            const T filter(const T& input)
+            {
+                return (input > min_limit_ && input < max_limit_) ? input : return_value_;
             }
 
-            inline T filter(const T& input)
+            const T& getMinLimit() const 
             {
-                if(input < min_limit_) return min_limit_;
-                if(input > max_limit_) return max_limit_;
-                return input;
+                return min_limit_;
+            }
+
+            const T& getMaxLimit() const 
+            {
+                return max_limit_;
+            }
+
+            bool setMinLimit(const T& min)
+            {
+                min_limit_ = min;
+                return true;
+            }
+
+            bool setMaxLimit(const T& max)
+            {
+                max_limit_ = max;
+                return true;
             }
 
         private:
             T min_limit_;
             T max_limit_;
+            T return_value_;
     };
 
     template<typename T>
     class LowPassFilter{
         public:
-            explicit LowPassFilter::LowPassFilter(const double gain)
+            LowPassFilter(const double& gain)
             :
                 low_pass_gain_(gain)
             {
 
             }
 
-            LowPassFilter::~LowPassFilter()
+            ~LowPassFilter()
             {
 
             }
 
-            inline T filter(const T& input, const T& input_previous)
+            const T filter(const T& input, const T& input_previous)
             {
                 return low_pass_gain_ * input + (1 - low_pass_gain_) * input_previous;
             }
 
-            void setGain(const double gain)
+            bool setGain(const double& gain)
             {
                 low_pass_gain_ = gain;
             }
 
-            T getGain() const
+            const T& getGain() const
             {
                 return low_pass_gain_;
             }
@@ -66,22 +88,22 @@ namespace sensor_filters_ns{
 
     class MedianFilter{
         public:
-            MedianFilter::MedianFilter();
-            MedianFilter::~MedianFilter();
+            MedianFilter();
+            ~MedianFilter();
             void filter();
     };
 
     class BandPassFilter{
         public:
-            BandPassFilter::BandPassFilter();
-            BandPassFilter::~BandPassFilter();
+            BandPassFilter();
+            ~BandPassFilter();
             void filter();
     };
 
     class KalmanFilter{
         public:
-            KalmanFilter::KalmanFilter();
-            KalmanFilter::~KalmanFilter();
+            KalmanFilter();
+            ~KalmanFilter();
             void start();
             double updateEstimation();
             double getKalmanGain();
