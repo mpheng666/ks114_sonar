@@ -6,7 +6,6 @@ unsigned int microseconds = 50000;
 
 const std::string ROS_NODE = "ks114_utility";
 uint8_t new_index;
-// uint8_t new_address;
 uint8_t old_address = 0;
 
 bool set_flag = false;
@@ -41,7 +40,7 @@ uint8_t checkSensorInfo()
 {
     std::vector<uint8_t> byte_received;
 
-    for(int i=0; i<20; i++)
+    for (int i = 0; i < 20; i++)
     {
         uint8_t info_cmd_single[3] = {sensor_address[i], 0x02, 0x99};
         ser.write(info_cmd_single, 3);
@@ -52,17 +51,15 @@ uint8_t checkSensorInfo()
         ser.flushOutput();
         byte_received.clear();
 
-        if(ser.available())
+        if (ser.available())
         {
             ser.read(byte_received, 22);
             ROS_INFO("Current connected sonar %d", i);
             old_address = byte_received[5];
             return byte_received[5];
         }
-
     }
     return 255;
-    
 }
 
 uint8_t userInput()
@@ -72,7 +69,7 @@ uint8_t userInput()
     ROS_INFO("Please insert new number! (0~7)");
     std::cin >> new_index;
 
-    return sensor_address[new_index-48];
+    return sensor_address[new_index - 48];
 }
 
 void writeNewAddress(uint8_t old_adress, uint8_t new_address)
@@ -98,10 +95,9 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, ROS_NODE);
 
-
-    if(openSerial())
+    if (openSerial())
     {
-        if(checkSensorInfo() < 255)
+        if (checkSensorInfo() < 255)
         {
             ser.flushInput();
             usleep(microseconds);
@@ -113,11 +109,10 @@ int main(int argc, char **argv)
             return 0;
         }
         else
-        ROS_ERROR("NONE OF THE SENSORS ARE CONNECTED!");
+            ROS_ERROR("NONE OF THE SENSORS ARE CONNECTED!");
         ros::shutdown();
         return 0;
     }
     ros::spin();
     return 0;
-
 }
