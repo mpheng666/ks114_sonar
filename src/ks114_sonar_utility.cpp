@@ -20,20 +20,22 @@ namespace ks114_sonar_utility
             if (this->openSerial(serial_port_, baud_rate_))
             {
                 // Check available sensors -> sensors address
-                if (this->getConnectedSensor(connected_sonar_))
+                if (this->getConnectedSensorInfo(connected_sonar_))
                 {
                     this->selectMode(UMode_);
                 }
                 else
                 {
                     std::cerr << "Please connect a sonar and restart!";
+                    return;
                 }
+                this->runStateMachine(UMode_);
             }
-            this->runStateMachine(UMode_);
         }
         catch (const std::exception &e)
         {
             std::cerr << e.what() << '\n';
+            return;
         }
     }
 
@@ -87,13 +89,13 @@ namespace ks114_sonar_utility
         return false;
     }
 
-    bool KS114SonarUtility::getConnectedSensor(uint8_t &output_address)
+    bool KS114SonarUtility::getConnectedSensorInfo(uint8_t &output_address)
     {
         bool sucess = false;
-        for (auto i = 0; i < sonar_address_.size(); ++i)
+        for (auto i = 0; i < SONAR_ADDRESSES_.size(); ++i)
         {
             std::vector<uint8_t> byte_received;
-            uint8_t info_cmd[3]{sonar_address_.at(i), 0x20, 0x99};
+            uint8_t info_cmd[3]{SONAR_ADDRESSES_.at(i), 0x20, 0x99};
             Serial_.write(info_cmd, 3);
             std::this_thread::sleep_for(std::chrono::microseconds(50));
             Serial_.flush();
@@ -148,7 +150,7 @@ namespace ks114_sonar_utility
     {
         bool success = false;
         uint8_t connected_sensor_now;
-        if (this->getConnectedSensor(connected_sensor_now))
+        if (this->getConnectedSensorInfo(connected_sensor_now))
         {
             if (connected_sensor_now == reference_sensor_address)
             {
@@ -178,7 +180,7 @@ namespace ks114_sonar_utility
         uint8_t address_cmd_A[3] = {sensor_current_address, 0x02, 0x9a};
         uint8_t address_cmd_B[3] = {sensor_current_address, 0x02, 0x92};
         uint8_t address_cmd_C[3] = {sensor_current_address, 0x02, 0x9e};
-        uint8_t address_cmd_D[3] = {sensor_current_address, 0x02, sonar_address_[new_index]};
+        uint8_t address_cmd_D[3] = {sensor_current_address, 0x02, SONAR_ADDRESSES_[new_index]};
 
         Serial_.write(address_cmd_A, 3);
         std::this_thread::sleep_for(std::chrono::microseconds(50));
@@ -189,7 +191,7 @@ namespace ks114_sonar_utility
         Serial_.write(address_cmd_D, 3);
         std::this_thread::sleep_for(std::chrono::microseconds(2000));
 
-        if (compareAddress(sonar_address_[new_index]))
+        if (compareAddress(SONAR_ADDRESSES_[new_index]))
         {
             sucess = true;
         }
