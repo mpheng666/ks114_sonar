@@ -227,17 +227,17 @@ double SonarKs114::filterSensorsData(const double input)
 {
     // const double lp_gain = 0.8;
     // sensor_filters_ns::LowPassFilter<double> low_pass_filter_(lp_gain);
-
+    double output{};
     if (detection_mode_ == DetectionMode::FastDetection) {
         sensor_filters_ns::ThresholdFilter<double> thres_f(
                 RANGE_MIN, RANGE_MAX_FAST, RANGE_ERROR);
         return thres_f.filter(input);
-    }
-    else if (detection_mode_ == DetectionMode::NormalDetection) {
+    } else if (detection_mode_ == DetectionMode::NormalDetection) {
         sensor_filters_ns::ThresholdFilter<double> thres_f(
                 RANGE_MIN, RANGE_MAX_NORMAL, RANGE_ERROR);
         return thres_f.filter(input);
     }
+    return output;
 }
 
 void SonarKs114::pubSensorsData(const std::vector<double> &output)

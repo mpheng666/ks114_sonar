@@ -1,5 +1,5 @@
-#ifndef KS114_SONAR_UTILITY_HPP_
-#define KS114_SONAR_UTILITY_HPP_
+#ifndef KS114_SONAR_HPP_
+#define KS114_SONAR_HPP_
 
 #include <serial/serial.h>
 
@@ -10,23 +10,31 @@
 #include <string>
 #include <string_view>
 #include <thread>
-#include <unordered_map>
 #include <vector>
 
 namespace ks114_sonar {
+
 struct SonarConfiguration {
     uint8_t firmware_version{};
     uint8_t manufacturing_date{};
-    uint8_t baud_rate{};
+    int baud_rate{};
     uint8_t address{};
-    uint8_t noise_suppression_level{};
-    uint8_t beam_angle{};
+    std::string noise_suppression_level{};
+    std::string beam_angle{};
     uint8_t error_code{};
+
+    void printConfig() {
+        // std::cout << "Baud_rate: " << baud_rate << "\n";
+        std::cout << "Address: " << std::hex << static_cast<int>(address) << "\n";
+        std::cout << "Noise_suppression_level: " << noise_suppression_level
+                  << "\n";
+        std::cout << "Beam_angle: " << beam_angle << "\n";
+    }
 };
 
 const std::map<int, uint8_t> SONAR_ADDRESSES{
         {1, 0XD0},  {2, 0XD2},  {3, 0XD4},  {4, 0XD6},  {5, 0XD8},
-        {6, 0XDA},  {7, 0XDC},  {10, 0XDE}, {9, 0XE0},  {10, 0XE2},
+        {6, 0XDA},  {7, 0XDC},  {8, 0XDE},  {9, 0XE0},  {10, 0XE2},
         {11, 0XE4}, {12, 0XE6}, {13, 0XE8}, {14, 0XEA}, {15, 0XEC},
         {16, 0XEE}, {17, 0XF8}, {18, 0XFA}, {19, 0XFC}, {20, 0XFE}};
 
@@ -57,17 +65,19 @@ public:
                         const int serial_baud_rate = 115200);
     ~Ks114Sonar();
     bool start();
+    bool stop();
     SonarConfiguration getSonarConfig() const;
     SerialPortState getSerialPortState() const;
     SonarState getSonarState() const;
     bool getDistance(const DetectionMode &mode, double &distance);
+    void setIndex(const int index);
 
 private:
     int sonar_index_{0};
-    SonarConfiguration SonarConfig_;
-    serial::Serial Serial_;
+    SonarConfiguration sonar_config_;
     std::string serial_port_{"/dev/ttyUSB0"};
     int serial_baud_rate_{115200};
+    serial::Serial Serial_;
     SerialPortState serial_port_state_{SerialPortState::PortUnopened};
     SonarState sonar_state_{SonarState::Unstarted};
 
