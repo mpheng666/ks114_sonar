@@ -24,18 +24,9 @@ private:
     std::string serial_port_{"/dev/ttyUSB0"};
     int baud_rate_{115200};
     UtilityMode UMode_;
-    // serial::Serial Serial_;
     const std::size_t sonars_size = ks114_sonar::SONAR_ADDRESSES.size();
 
-    // uint8_t connected_sonar_{0XE8};
-    // uint8_t current_noise_suppression_level_{0X71};
-    // uint8_t current_beam_config_{0X7B};
-    
-    ks114_sonar::SonarConfiguration sonar_config_;
-
-    // bool selectMode(UtilityMode &utility_mode);
-    // bool openSerial(const std::string &serial_port, const int baudrate);
-    // bool getConnectedSensorInfo(uint8_t &output_address);
+    bool selectMode();
     // void runStateMachine(UtilityMode &utility_mode);
     // bool compareAddress(const uint8_t reference_sensor_address);
     // bool setNewAddress(const uint8_t sensor_current_address);

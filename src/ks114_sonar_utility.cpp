@@ -13,43 +13,39 @@ void KS114SonarUtility::start() {
     std::array<ks114_sonar::Ks114Sonar, 20> sonars;
 
     for (auto i = 0; i < sonars.size(); ++i) {
-        sonars.at(i).setIndex(i+1);
-        if(sonars.at(i).start())
-        {
-            std::cout << "Sonar connected: " << i+1 << "\n";
+        sonars.at(i).setIndex(i + 1);
+        if (sonars.at(i).start()) {
+            std::cout << "Sonar connected: " << i + 1 << "\n";
             sonars.at(i).getSonarConfig().printConfig();
             break;
         }
     }
-
-    // for(const auto& sonar : sonars)
-    // {
-    //     std::cout << static_cast<float>(sonar.getSonarConfig().address) <<
-    //     "\n";
-    // }
+    selectMode();
 }
 
-// bool KS114SonarUtility::selectMode(UtilityMode &utility_mode) {
-//     bool sucess{false};
-//     // Ask user to input mode
-//     std::cout << "Please select a mode to continue: \n 1.
-//     ADDRESS_MODIFICATION "
-//                  "\n 2. BAUTRATE_MODIFICATION \n 3. "
-//                  "NOISE_SUPPRESSION_MODIFICATION \n 4.
-//                  BEAM_ANGLE_MODIFICATION "
-//                  "\n 5. DETECTION \n";
+bool KS114SonarUtility::selectMode() {
+    bool sucess{false};
+    std::cout << "Please select a mode to continue: \n 1. ADDRESS_MODIFICATION "
+                 "\n 2. BAUTRATE_MODIFICATION \n 3. "
+                 "NOISE_SUPPRESSION_MODIFICATION \n 4. BEAM_ANGLE_MODIFICATION "
+                 "\n 5. DETECTION \n";
 
-//     int mode = -1;
-//     while (mode == -1) {
-//         std::cin >> mode;
-//         if (mode < 1 || mode > 5) {
-//             std::cout << "Please select number (1~5) \n";
-//         }
-//     }
-//     utility_mode = static_cast<UtilityMode>(mode);
-//     sucess = true;
-//     return sucess;
-// }
+    int mode = -1;
+    while (mode == -1) {
+        int user_input;
+        std::cin >> user_input;
+        if (user_input >= 1 && user_input <= 5 && std::cin.good()) {
+            mode = user_input;
+        } else {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Please select number (1~5) \n";
+        }
+    }
+    UMode_ = static_cast<UtilityMode>(mode);
+    sucess = true;
+    return sucess;
+}
 
 // bool KS114SonarUtility::openSerial(const std::string &serial_port,
 //                                    const int baudrate) {
