@@ -25,7 +25,8 @@ struct SonarConfiguration {
 
     void printConfig() {
         // std::cout << "Baud_rate: " << baud_rate << "\n";
-        std::cout << "Address: " << std::hex << static_cast<int>(address) << "\n";
+        std::cout << "Address: " << std::hex << static_cast<int>(address)
+                  << "\n";
         std::cout << "Noise_suppression_level: " << noise_suppression_level
                   << "\n";
         std::cout << "Beam_angle: " << beam_angle << "\n";
@@ -60,9 +61,9 @@ const std::map<DetectionMode, uint8_t> DETECTION_MODE{
 
 class Ks114Sonar {
 public:
-    explicit Ks114Sonar(const int index = 1,
-                        const std::string serial_port = "/dev/ttyUSB0",
-                        const int serial_baud_rate = 115200);
+    Ks114Sonar(const int index = 1,
+               const std::string serial_port = "/dev/ttyUSB0",
+               const int serial_baud_rate = 115200);
     ~Ks114Sonar();
     bool start();
     bool stop();
@@ -70,7 +71,8 @@ public:
     SerialPortState getSerialPortState() const;
     SonarState getSonarState() const;
     bool getDistance(const DetectionMode &mode, double &distance);
-    void setIndex(const int index);
+    bool setIndex(const int index);
+    void sendSerialCmd(const uint8_t command[3]);
 
 private:
     int sonar_index_{0};

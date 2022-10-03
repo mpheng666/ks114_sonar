@@ -117,16 +117,18 @@ namespace ks114_ns
 
 /*
         --- List of possible addresses for KS114 ---
-        The convention used here is always start from front right middle's index = 0 counter-clockwise to N
+        The convention used here is always start from front right middle's index = 1 counter-clockwise to N
         Eg:
               FRONT
-             _1___0_
-          2 |       | 7
+             _2___1_
+          3 |       | 8
             |       |
-          3 |       | 6
+          4 |       | 7
              -------
-            4      5
+            5      6
                BACK
-        sensor_address[0] = 0XD0;
-        sensor_address[1] = 0XD2;
+        sonar_index_1 = 0XD0;
+        sonar_index_2 = 0XD2;
+        array[0] = sonar_index_1
+        array[1] = sonar_index_2
 */

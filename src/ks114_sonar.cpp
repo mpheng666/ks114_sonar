@@ -16,7 +16,7 @@ bool Ks114Sonar::start() {
             if (this->getSonarInfo()) {
                 sonar_state_ = SonarState::Started;
             } else {
-                std::cerr << "Sonar at index " << sonar_index_
+                std::cout << "Sonar at index " << sonar_index_
                           << " is not found! \n";
                 sonar_state_ = SonarState::Unstarted;
             }
@@ -54,7 +54,18 @@ SerialPortState Ks114Sonar::getSerialPortState() const {
 }
 SonarState Ks114Sonar::getSonarState() const { return sonar_state_; }
 
-void Ks114Sonar::setIndex(const int index) { sonar_index_ = index; }
+bool Ks114Sonar::setIndex(const int index) {
+    if (sonar_state_ != SonarState::Started) {
+        sonar_index_ = index;
+        return true;
+    }
+    return false;
+}
+
+void Ks114Sonar::sendSerialCmd(const uint8_t command[3]) {
+    Serial_.write(command, 3);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+}
 
 bool Ks114Sonar::openSerialPort() {
     if (serial_port_state_ != SerialPortState::PortOpened) {
@@ -70,7 +81,7 @@ bool Ks114Sonar::openSerialPort() {
                           << '\n';
                 serial_port_state_ = SerialPortState::PortOpened;
             } else {
-                std::cerr << "Serial port " << serial_port_
+                std::cout << "Serial port " << serial_port_
                           << " failed to open at baud rate "
                           << serial_baud_rate_ << '\n';
                 serial_port_state_ = SerialPortState::PortUnopened;
@@ -88,9 +99,9 @@ bool Ks114Sonar::getSonarInfo() {
     bool success{false};
     std::vector<uint8_t> byte_received{};
     uint8_t info_cmd[3]{SONAR_ADDRESSES.at(sonar_index_), 0x02, 0x99};
+    Serial_.flush();
     Serial_.write(info_cmd, 3);
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    Serial_.flush();
     if (Serial_.available()) {
         Serial_.read(byte_received, 22);
         sonar_config_.firmware_version = byte_received.at(0);
