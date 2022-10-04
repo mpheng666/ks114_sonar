@@ -54,14 +54,13 @@ add_executable(ks114_sonar_utility ${SOURCES3})
 #   ${SERIAL_LIBRARIES}
 # )
 
-
-add_library(ks114_sonar ${SOURCES2})
-
 target_link_libraries(ks114_sonar_node
   ${SERIAL_LIBRARIES}
 )
 
+add_library(ks114_sonar ${SOURCES2})
+target_link_libraries(ks114_sonar ${SERIAL_LIBRARIES})
+
 target_link_libraries(ks114_sonar_utility
-  ${SERIAL_LIBRARIES}
   ks114_sonar
 )
