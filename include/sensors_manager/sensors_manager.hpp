@@ -18,6 +18,7 @@ public:
 private:
     ros::NodeHandle nh_p_;
     ros::Publisher sonars_pub_;
+    std::vector<ros::Publisher> range_sensors_pubs_;
     ros::Timer pub_timer_;
     static constexpr double LOOP_RATE_{20.0};
     int num_of_sensor_{8};
@@ -31,7 +32,8 @@ private:
 
     void loadParams();
     void startSensors();
-    void timerCallBack(const ros::TimerEvent &);
+    void initRosPub();
+    void timerPubCallBack(const ros::TimerEvent &);
 };
 } // namespace sensors_manager
 

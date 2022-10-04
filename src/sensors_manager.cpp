@@ -6,7 +6,7 @@ SensorsManager::SensorsManager(ros::NodeHandle &nh)
     : nh_p_(nh),
       sonars_pub_(nh_p_.advertise<std_msgs::Float64>("sonars_data", 10)),
       pub_timer_(nh_p_.createTimer(
-              ros::Duration(0.05), &SensorsManager::timerCallBack, this))
+              ros::Duration(0.05), &SensorsManager::timerPubCallBack, this))
 
 {
 }
@@ -15,26 +15,14 @@ SensorsManager::~SensorsManager() {}
 
 void SensorsManager::start()
 {
-    startSensors();
     loadParams();
+    startSensors();
+    initRosPub();
     ros::Rate rate = LOOP_RATE_;
     while (ros::ok()) {
         ros::spinOnce();
         rate.sleep();
     }
-}
-
-void SensorsManager::startSensors()
-{
-    for (const auto &sonar : sonars_ | boost::adaptors::indexed(0)) {
-        sonar.value().setIndex(sonar.index() + 1);
-    }
-    std::for_each(sonars_.begin(), (sonars_.begin() + num_of_sensor_),
-                  [](auto &sonar) {
-                      if (sonar.start()) {
-                          sonar.getSonarConfig().printConfig();
-                      }
-                  });
 }
 
 void SensorsManager::loadParams()
@@ -62,7 +50,31 @@ void SensorsManager::loadParams()
     }
 }
 
-void SensorsManager::timerCallBack(const ros::TimerEvent &)
+void SensorsManager::startSensors()
+{
+    for (const auto &sonar : sonars_ | boost::adaptors::indexed(0)) {
+        sonar.value().setIndex(sonar.index() + 1);
+    }
+    std::for_each(sonars_.begin(), (sonars_.begin() + num_of_sensor_),
+                  [](auto &sonar) {
+                      if (sonar.start()) {
+                          sonar.getSonarConfig().printConfig();
+                      }
+                  });
+}
+
+void SensorsManager::initRosPub()
+{
+    range_sensors_pubs_.resize(num_of_sensor_);
+    for (const auto &range_sensor_pub :
+         range_sensors_pubs_ | boost::adaptors::indexed(0)) {
+        std::string topic_name = "sonar_range_" + range_sensor_pub.index();
+        range_sensor_pub.value() =
+                nh_p_.advertise<sensor_msgs::Range>(topic_name, 10);
+    }
+}
+
+void SensorsManager::timerPubCallBack(const ros::TimerEvent &)
 {
     std_msgs::Float64 msg;
     std::for_each(sonars_.begin(), (sonars_.begin() + num_of_sensor_),
@@ -70,4 +82,19 @@ void SensorsManager::timerCallBack(const ros::TimerEvent &)
                       sonar.getDistance(ks114_detection_mode_, msg.data);
                       sonars_pub_.publish(msg);
                   });
+
+    sensor_msgs::Range range_msg;
+    range_msg.range = msg.data;
+    range_msg.header.stamp = ros::Time::now();
+    range_msg.radiation_type = range_msg.ULTRASOUND;
+    range_msg.min_range =
+            (ks114_detection_mode_ == ks114_sonar::DetectionMode::Far) ? 0.03
+                                                                       : 0.01;
+    range_msg.max_range =
+            (ks114_detection_mode_ == ks114_sonar::DetectionMode::Far) ? 1.1
+                                                                       : 5.6;
+    for (const auto &range_sensor_pub :
+         range_sensors_pubs_ | boost::adaptors::indexed(0)) {
+        range_sensor_pub.value().publish(range_msg);
+    }
 }
