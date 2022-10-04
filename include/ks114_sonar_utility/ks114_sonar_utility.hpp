@@ -32,10 +32,9 @@ private:
     bool selectMode();
     void runStateMachine();
     bool setNewAddress();
-    // bool setNewBaudRate(const int baudrate = 115200);
-    // bool setNewNoiseSuppressionLevel(const int level = 1);
-    // bool setNewBeamAngleMode(const int mode = 1);
-    // bool detect(const int mode = 1);
+    bool setNewBaudRate();
+    bool setNewNoiseSuppressionLevel();
+    bool setNewBeamAngleMode();
 };
 } // namespace ks114_sonar_utility
 

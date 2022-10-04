@@ -23,7 +23,8 @@ struct SonarConfiguration {
     std::string beam_angle{};
     uint8_t error_code{};
 
-    void printConfig() {
+    void printConfig()
+    {
         // std::cout << "Baud_rate: " << baud_rate << "\n";
         std::cout << "Address: " << std::hex << static_cast<int>(address)
                   << "\n";
