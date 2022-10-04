@@ -8,33 +8,48 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Range.h>
 
-namespace sensors_manager {
-class SensorsManager {
-public:
-    explicit SensorsManager(ros::NodeHandle &nh);
-    ~SensorsManager();
-    void start();
+namespace sensors_manager
+{
+    static constexpr std::array<std::string_view, 8> ROBOT_BODY
+    {"FRONT_RIGHT", "FRONT_LEFT", "LEFT_FRONT", "LEFT_SIDE",
+     "BACK_LEFT", "BACK_RIGHT", "RIGHT_SIDE", "RIGHT_FRONT"};
 
-private:
-    ros::NodeHandle nh_p_;
-    ros::Publisher sonars_pub_;
-    std::vector<ros::Publisher> range_sensors_pubs_;
-    ros::Timer pub_timer_;
-    static constexpr double LOOP_RATE_{20.0};
-    int num_of_sensor_{8};
-    std::string serial_port_{"/dev/ttyUSB0"};
-    int serial_baud_rate_{115200};
+    class SensorsManager
+    {
+    public:
+        explicit SensorsManager(ros::NodeHandle &nh);
+        ~SensorsManager();
+        void start();
 
-    std::array<ks114_sonar::Ks114Sonar, 20> sonars_;
-    int detection_mode_{0};
-    ks114_sonar::DetectionMode ks114_detection_mode_{
+    private:
+        // std::map<int, std::string> SONAR_POSITION{{1,}, {2,}, {3,}, {4,}, {5,}, {6,}, {7,}, {8,}};
+        std::map<std::string, int> SONAR_POSITION{};
+        ros::NodeHandle nh_p_;
+        ros::Publisher sonars_pub_;
+        std::vector<ros::Publisher> range_sensors_pubs_;
+        ros::SteadyTimer get_data_stimer_;
+        ros::Timer pub_timer_;
+        static constexpr double LOOP_RATE_{20.0};
+        int num_of_sensor_{8};
+        std::string serial_port_{"/dev/ttyUSB0"};
+        int serial_baud_rate_{115200};
+        std::vector<int> sonar_remapper_ {};
+
+        std::array<ks114_sonar::Ks114Sonar, 20> sonars_;
+        int detection_mode_{0};
+        ks114_sonar::DetectionMode ks114_detection_mode_{
             ks114_sonar::DetectionMode::Fast};
 
-    void loadParams();
-    void startSensors();
-    void initRosPub();
-    void timerPubCallBack(const ros::TimerEvent &);
-};
+        std_msgs::Float64MultiArray data_msgs_;
+        std::vector<sensor_msgs::Range> range_msgs_;
+
+        void loadParams();
+        void updateVariables();
+        void startSensors();
+        void initRosPub();
+        void timerGetDataSteadyCallBack(const ros::SteadyTimerEvent &);
+        void timerPubCallBack(const ros::TimerEvent &);
+    };
 } // namespace sensors_manager
 
 #endif
