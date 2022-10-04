@@ -167,9 +167,55 @@ bool KS114SonarUtility::setNewNoiseSuppressionLevel()
     bool success = false;
     std::cout << "Selected mode "
               << "NOISE_SUPPRESSION_MODIFICATION" << '\n';
+    int i = 1;
+    for (const auto &[key, value] : ks114_sonar::NOISE_SUPPRESSIONS) {
+        std::cout << " " << i++ << ". " << value << "\n";
+    }
+    std::cout << "\n";
+    std::cout << "The suppression increases with the mode increment \n";
     std::cout << "\n";
 
-    std::cout << "NOT IMPLEMENTED YET! '\n";
+    std::cout << "Please insert a new mode! (1~8) \n";
+    std::cout << "\n";
+    int new_mode = -1;
+
+    while (new_mode == -1) {
+        int user_input;
+        std::cin >> user_input;
+        if (user_input >= 1 && user_input <= 8 && std::cin.good()) {
+            new_mode = user_input;
+            uint8_t address_cmd_A[3] = {
+                    sonars_.at(connected_sonar_index_).getSonarConfig().address,
+                    0x02, 0x9c};
+            uint8_t address_cmd_B[3] = {
+                    sonars_.at(connected_sonar_index_).getSonarConfig().address,
+                    0x02, 0x95};
+            uint8_t address_cmd_C[3] = {
+                    sonars_.at(connected_sonar_index_).getSonarConfig().address,
+                    0x02, 0x98};
+            auto it = ks114_sonar::NOISE_SUPPRESSIONS.begin();
+            std::advance(it, new_mode - 1);
+            uint8_t address_cmd_D[3] = {
+                    sonars_.at(connected_sonar_index_).getSonarConfig().address,
+                    0x02, it->first};
+
+            sonars_.at(connected_sonar_index_).sendSerialCmd(address_cmd_A);
+            sonars_.at(connected_sonar_index_).sendSerialCmd(address_cmd_B);
+            sonars_.at(connected_sonar_index_).sendSerialCmd(address_cmd_C);
+            sonars_.at(connected_sonar_index_).sendSerialCmd(address_cmd_D);
+
+            success = true;
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+            std::cout << "PLEASE RECONNECT THE POWER OF THE SONAR FOR IT AND "
+                         "RUN THE SCRIPT AGAIN TO VERIFY THE NEW CONFIG! \n ";
+        }
+        else {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Please select number (1~6) \n";
+        }
+    }
     return success;
 }
 
