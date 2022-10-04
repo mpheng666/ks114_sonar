@@ -73,6 +73,8 @@ public:
     SonarState getSonarState() const;
     bool getDistance(const DetectionMode &mode, double &distance);
     bool setIndex(const int index);
+    bool setSerialPort(const std::string& new_port_name);
+    bool setSerialBaudRate(const int new_baud_rate);
     void sendSerialCmd(const uint8_t command[3]);
 
 private:
