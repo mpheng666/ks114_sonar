@@ -20,8 +20,8 @@ bool Ks114Sonar::start()
                 sonar_state_ = SonarState::Started;
             }
             else {
-                std::cout << "Sonar at index " << sonar_index_
-                          << " is not found! \n";
+                // std::cout << "Sonar at index " << sonar_index_
+                //           << " is not found! \n";
                 sonar_state_ = SonarState::Unstarted;
             }
         }
@@ -87,9 +87,9 @@ bool Ks114Sonar::openSerialPort()
             Serial_.setTimeout(timeout);
             Serial_.open();
             if (Serial_.isOpen()) {
-                std::cout << "Serial port " << serial_port_
-                          << " is opened at baud rate " << serial_baud_rate_
-                          << '\n';
+                // std::cout << "Serial port " << serial_port_
+                //           << " is opened at baud rate " << serial_baud_rate_
+                //           << '\n';
                 serial_port_state_ = SerialPortState::PortOpened;
             }
             else {
@@ -135,11 +135,12 @@ bool Ks114Sonar::getSonarInfo()
 bool Ks114Sonar::getDistance(const DetectionMode &mode, double &distance)
 {
     bool success{false};
-
+    int data_conversion_multiplier{5800};
     if (sonar_state_ == SonarState::Started) {
         int sleep_time_ms{15};
         if (mode == DetectionMode::Far) {
             sleep_time_ms = 50;
+            data_conversion_multiplier = 1000;
         }
         std::vector<uint8_t> byte_received{};
         const uint8_t command[3]{sonar_config_.address, 0x02,
@@ -150,7 +151,8 @@ bool Ks114Sonar::getDistance(const DetectionMode &mode, double &distance)
             Serial_.read(byte_received, 2);
             auto value_in_byte = static_cast<uint16_t>(byte_received[0] << 8 |
                                                        byte_received[1]);
-            distance = static_cast<float>(value_in_byte) / 5800.0;
+            distance = static_cast<float>(value_in_byte) /
+                       data_conversion_multiplier;
             success = true;
         }
     }

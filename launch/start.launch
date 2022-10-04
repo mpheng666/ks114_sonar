@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-    <node pkg="ks114_sonar" name="ks114_sonar" type="ks114_sonar" output="screen">
+    <node pkg="ks114_sonar" name="sensors_manager_node" type="sensors_manager_node" output="screen">
         <rosparam command="load" file="$(find ks114_sonar)/config/params.yaml"/>
     </node>
  
