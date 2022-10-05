@@ -5,6 +5,8 @@ using namespace sensors_manager;
 SensorsManager::SensorsManager(ros::NodeHandle &nh)
     : nh_p_(nh), sonars_pub_(nh_p_.advertise<std_msgs::Float64MultiArray>(
                          "sonars_data", 10)),
+      sonars_filtered_pub_(nh_p_.advertise<std_msgs::Float64MultiArray>(
+              "sonars_filtered_data", 10)),
       get_data_stimer_(nh_p_.createSteadyTimer(
               ros::WallDuration(0.5),
               &SensorsManager::timerGetDataSteadyCallBack,
@@ -77,6 +79,8 @@ void SensorsManager::loadParams()
             num_of_sonar_ = sonar_remapper_.size();
             sonars_data_raw_.resize(num_of_sonar_);
             sonars_state_.resize(num_of_sonar_);
+            sonars_data_filtered_.resize(num_of_sonar_);
+            sonars_data_filtered_prev_.resize(num_of_sonar_);
         }
     }
     if (!nh_p_.param("detection_mode", detection_mode_, detection_mode_)) {
@@ -162,7 +166,8 @@ void SensorsManager::timerGetDataSteadyCallBack(const ros::SteadyTimerEvent &)
 
 void SensorsManager::timerPubCallBack(const ros::TimerEvent &)
 {
-    std_msgs::Float64MultiArray msgs;
+    std_msgs::Float64MultiArray raw_msgs;
+    std_msgs::Float64MultiArray filtered_msgs;
     sensor_msgs::Range range_msg;
     range_msg.radiation_type = range_msg.ULTRASOUND;
     range_msg.min_range =
@@ -173,10 +178,18 @@ void SensorsManager::timerPubCallBack(const ros::TimerEvent &)
                                                                         : 5.6;
     for (const auto &sonar_data :
          sonars_data_raw_ | boost::adaptors::indexed(0)) {
-        msgs.data.emplace_back(sonar_data.value());
+        raw_msgs.data.emplace_back(sonar_data.value());
+        filtered_msgs.data.emplace_back(signal_filter::lowPassFilter(
+                0.8,
+                signal_filter::thresholdFilter(range_msg.min_range,
+                                               range_msg.max_range,
+                                               sonar_data.value()),
+                sonars_data_filtered_prev_.at(sonar_data.index())));
         range_msg.header.stamp = ros::Time::now();
         range_msg.range = sonar_data.value();
         range_sensors_pubs_.at(sonar_data.index()).publish(range_msg);
     }
-    sonars_pub_.publish(msgs);
+    sonars_data_filtered_prev_ = filtered_msgs.data;
+    sonars_pub_.publish(raw_msgs);
+    sonars_filtered_pub_.publish(filtered_msgs);
 }

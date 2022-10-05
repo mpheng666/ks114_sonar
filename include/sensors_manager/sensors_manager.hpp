@@ -2,6 +2,7 @@
 #define SENSORS_MANAGER_HPP_
 
 #include "ks114_sonar/ks114_sonar.hpp"
+#include "signal_filter/signal_filter.hpp"
 #include "std_msgs/Float64MultiArray.h"
 #include <boost/range/adaptors.hpp>
 #include <ros/ros.h>
@@ -35,6 +36,7 @@ private:
     // ROS related
     ros::NodeHandle nh_p_;
     ros::Publisher sonars_pub_;
+    ros::Publisher sonars_filtered_pub_;
     std::vector<ros::Publisher> range_sensors_pubs_;
     ros::SteadyTimer get_data_stimer_;
     ros::Timer pub_timer_;
@@ -57,6 +59,8 @@ private:
             ks114_sonar::DetectionMode::Fast};
     std::array<ks114_sonar::Ks114Sonar, 20> sonars_;
     std::vector<double> sonars_data_raw_;
+    std::vector<double> sonars_data_filtered_;
+    std::vector<double> sonars_data_filtered_prev_;
     std::vector<ks114_sonar::SonarState> sonars_state_{};
 
     void loadParams();

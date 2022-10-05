@@ -41,6 +41,14 @@ include_directories(${SERIAL_INCLUDE_DIRS})
 link_directories(${SERIAL_LIBRARY_DIRS})
 
 
+# signal filter lib
+add_library(signal_filter src/signal_filter.cpp)
+# target_compile_features(
+#     signal_filter 
+#         cxx_std_17
+# )
+# target_include_directories(lib2 INTERFACE ../lib1/lib1.h)
+
 # ks114 sonar base 
 set(SOURCES1 src/ks114_sonar_node.cpp src/ks114_sonar.cpp)
 add_executable(ks114_sonar_node ${SOURCES1})
@@ -67,6 +75,7 @@ target_link_libraries(sensors_manager_node
   ${roscpp_LIBRARIES}
   ${catkin_LIBRARIES}
   ks114_sonar
+  signal_filter
 )
 
 
