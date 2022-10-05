@@ -1,3 +1,4 @@
+# serial configuration
 serial_port: "/dev/ttyUSB0"
 #serial_port: /dev/serial3by-id/usb-FTDI_FT232R_USB_UART_AB0LYXFN-if00-port0
 serial_baud_rate: 115200
@@ -20,3 +21,8 @@ sonar_remapper: [1] # only one sensor
 #   0 - normal speed read (0.03m ~ 5.6m)
 #   1 - high speed read (0.01m ~ 1.1m) # recommended
 detection_mode: 1
+
+# filter configuration
+use_threshold_filter: false
+use_low_pass_filter: true
+low_pass_gain: 0.7

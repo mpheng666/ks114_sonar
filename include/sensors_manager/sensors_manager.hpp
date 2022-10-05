@@ -62,6 +62,13 @@ private:
     std::vector<double> sonars_data_filtered_;
     std::vector<double> sonars_data_filtered_prev_;
     std::vector<ks114_sonar::SonarState> sonars_state_{};
+    double min_reading{DBL_MIN};
+    double max_reading{DBL_MAX};
+
+    // filter config
+    bool use_threshold_filter_{true};
+    bool use_low_pass_filter_{true};
+    double low_pass_gain_{0.8};
 
     void loadParams();
     void startSensors();
