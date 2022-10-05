@@ -76,6 +76,7 @@ void SensorsManager::loadParams()
         else {
             num_of_sonar_ = sonar_remapper_.size();
             sonars_data_raw_.resize(num_of_sonar_);
+            sonars_state_.resize(num_of_sonar_);
         }
     }
     if (!nh_p_.param("detection_mode", detection_mode_, detection_mode_)) {
@@ -94,12 +95,18 @@ void SensorsManager::loadParams()
 
 void SensorsManager::startSensors()
 {
-    for (const auto &sonar : sonars_ | boost::adaptors::indexed(1)) {
-        sonar.value().setIndex(sonar.index());
-        sonar.value().setSerialPort(serial_port_);
-        sonar.value().setSerialBaudRate(serial_baud_rate_);
-        if (sonar.value().start()) {
-            sonar.value().getSonarConfig().printConfig();
+    for (const auto &remapper : sonar_remapper_ | boost::adaptors::indexed(1)) {
+        sonars_.at(remapper.value()).setIndex(remapper.value());
+        sonars_.at(remapper.value()).setSerialPort(serial_port_);
+        sonars_.at(remapper.value()).setSerialBaudRate(serial_baud_rate_);
+        if (sonars_.at(remapper.value()).start()) {
+            sonars_.at(remapper.value()).getSonarConfig().printConfig();
+            sonars_state_.at(remapper.index() - 1) =
+                    ks114_sonar::SonarState::Started;
+        }
+        else {
+            sonars_state_.at(remapper.index() - 1) =
+                    ks114_sonar::SonarState::Error;
         }
     }
 }
@@ -118,8 +125,38 @@ void SensorsManager::initRosPub()
 void SensorsManager::timerGetDataSteadyCallBack(const ros::SteadyTimerEvent &)
 {
     for (auto i = 0; i < num_of_sonar_; ++i) {
-        sonars_.at(sonar_remapper_.at(i) - 1)
-                .getDistance(ks114_detection_mode_, sonars_data_raw_.at(i));
+        if (sonars_state_.at(i) == ks114_sonar::SonarState::Started) {
+            if (sonars_.at(sonar_remapper_.at(i))
+                        .getDistance(ks114_detection_mode_,
+                                     sonars_data_raw_.at(i))) {
+                sonars_state_.at(i) = ks114_sonar::SonarState::Started;
+            }
+            else {
+                sonars_state_.at(i) = ks114_sonar::SonarState::Error;
+                ROS_WARN_STREAM("SONAR "
+                                << sonar_remapper_.at(i)
+                                << " DISCONNECTED FOR THE FIRST TIME!");
+            }
+        }
+        else {
+            // ROS_WARN_STREAM("Attempting to reconnect sonar "
+            //                 << sonar_remapper_.at(i));
+            if (sonars_.at(sonar_remapper_.at(i)).start()) {
+                sonars_.at(sonar_remapper_.at(i))
+                        .getSonarConfig()
+                        .printConfig();
+                ROS_WARN_STREAM("SONAR " << sonar_remapper_.at(i)
+                                         << " RECONNECTED!");
+                sonars_state_.at(i) = ks114_sonar::SonarState::Started;
+            }
+            else {
+                ROS_WARN_STREAM("SONAR " << sonar_remapper_.at(i)
+                                         << " DISCONNECTED CONTINUOUSLY! ");
+                sonars_state_.at(i) = ks114_sonar::SonarState::Error;
+
+                sonars_data_raw_.at(i) = ks114_sonar::DATA_GIVEN_IF_ERROR;
+            }
+        }
     }
 }
 

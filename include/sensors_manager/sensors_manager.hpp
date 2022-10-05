@@ -32,30 +32,32 @@ public:
     void start();
 
 private:
-    // std::map<int, std::string> SONAR_POSITION{{1,}, {2,}, {3,}, {4,}, {5,},
-    // {6,}, {7,}, {8,}};
-    static constexpr int MIN_NUMBER_OF_SONAR_{1};
-    static constexpr int MAX_NUMBER_OF_SONAR_{20};
-    const std::vector<int> DEFAULT_REMAPPER_{1, 2, 3, 4, 5, 6, 7, 8};
-    std::map<std::string, int> sonar_position_map_{};
+    // ROS related
     ros::NodeHandle nh_p_;
     ros::Publisher sonars_pub_;
     std::vector<ros::Publisher> range_sensors_pubs_;
     ros::SteadyTimer get_data_stimer_;
     ros::Timer pub_timer_;
     static constexpr double LOOP_RATE_{20.0};
+
+    // remapper
+    static constexpr int MIN_NUMBER_OF_SONAR_{1};
+    static constexpr int MAX_NUMBER_OF_SONAR_{20};
+    const std::vector<int> DEFAULT_REMAPPER_{1, 2, 3, 4, 5, 6, 7, 8};
+    std::vector<int> sonar_remapper_{1, 2, 3, 4, 5, 6, 7, 8};
     int num_of_sonar_{8};
+
+    // serial
     std::string serial_port_{"/dev/ttyUSB0"};
     int serial_baud_rate_{115200};
-    std::vector<int> sonar_remapper_{1, 2, 3, 4, 5, 6, 7, 8};
 
-    std::array<ks114_sonar::Ks114Sonar, 20> sonars_;
+    // sonar config
     int detection_mode_{0};
     ks114_sonar::DetectionMode ks114_detection_mode_{
             ks114_sonar::DetectionMode::Fast};
-
+    std::array<ks114_sonar::Ks114Sonar, 20> sonars_;
     std::vector<double> sonars_data_raw_;
-    std::vector<sensor_msgs::Range> range_msgs_;
+    std::vector<ks114_sonar::SonarState> sonars_state_{};
 
     void loadParams();
     void startSensors();

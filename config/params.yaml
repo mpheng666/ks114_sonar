@@ -12,6 +12,7 @@ serial_baud_rate: 115200
 #   5      6                       5      12         
 #     BACK                           BACK     
 # Valid index (1~20) depends on the configuration
+# sonar_remapper: [1] # only one sensor
 sonar_remapper: [1,2,3,4,5,6,7,8] # default
 # sonar_remapper: [2,14,9,4,5,12,1,5] # example_1
 

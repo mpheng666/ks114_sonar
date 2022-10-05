@@ -26,11 +26,11 @@ struct SonarConfiguration {
     void printConfig()
     {
         // std::cout << "Baud_rate: " << baud_rate << "\n";
-        std::cout << "Address: " << std::hex << static_cast<int>(address)
+        std::cout << "Address                 : " << std::hex
+                  << static_cast<int>(address) << "\n";
+        std::cout << "Noise_suppression_level : " << noise_suppression_level
                   << "\n";
-        std::cout << "Noise_suppression_level: " << noise_suppression_level
-                  << "\n";
-        std::cout << "Beam_angle: " << beam_angle << "\n";
+        std::cout << "Beam_angle              : " << beam_angle << "\n";
     }
 };
 
@@ -60,6 +60,7 @@ enum class DetectionMode { Far, Fast };
 const std::map<DetectionMode, uint8_t> DETECTION_MODE{
         {DetectionMode::Far, 0xB0}, {DetectionMode::Fast, 0x0F}};
 
+static constexpr double DATA_GIVEN_IF_ERROR{404};
 class Ks114Sonar {
 public:
     Ks114Sonar(const int index = 1,
@@ -73,7 +74,7 @@ public:
     SonarState getSonarState() const;
     bool getDistance(const DetectionMode &mode, double &distance);
     bool setIndex(const int index);
-    bool setSerialPort(const std::string& new_port_name);
+    bool setSerialPort(const std::string &new_port_name);
     bool setSerialBaudRate(const int new_baud_rate);
     void sendSerialCmd(const uint8_t command[3]);
 
