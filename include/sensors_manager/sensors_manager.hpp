@@ -2,7 +2,6 @@
 #define SENSORS_MANAGER_HPP_
 
 #include "ks114_sonar/ks114_sonar.hpp"
-#include "std_msgs/Float64.h"
 #include "std_msgs/Float64MultiArray.h"
 #include <boost/range/adaptors.hpp>
 #include <ros/ros.h>
@@ -35,6 +34,9 @@ public:
 private:
     // std::map<int, std::string> SONAR_POSITION{{1,}, {2,}, {3,}, {4,}, {5,},
     // {6,}, {7,}, {8,}};
+    static constexpr int MIN_NUMBER_OF_SONAR_{1};
+    static constexpr int MAX_NUMBER_OF_SONAR_{20};
+    const std::vector<int> DEFAULT_REMAPPER_{1, 2, 3, 4, 5, 6, 7, 8};
     std::map<std::string, int> sonar_position_map_{};
     ros::NodeHandle nh_p_;
     ros::Publisher sonars_pub_;
@@ -42,7 +44,7 @@ private:
     ros::SteadyTimer get_data_stimer_;
     ros::Timer pub_timer_;
     static constexpr double LOOP_RATE_{20.0};
-    int num_of_sensor_{8};
+    int num_of_sonar_{8};
     std::string serial_port_{"/dev/ttyUSB0"};
     int serial_baud_rate_{115200};
     std::vector<int> sonar_remapper_{1, 2, 3, 4, 5, 6, 7, 8};
@@ -52,11 +54,10 @@ private:
     ks114_sonar::DetectionMode ks114_detection_mode_{
             ks114_sonar::DetectionMode::Fast};
 
-    std_msgs::Float64MultiArray data_msgs_;
+    std::vector<double> sonars_data_raw_;
     std::vector<sensor_msgs::Range> range_msgs_;
 
     void loadParams();
-    void updateVariables();
     void startSensors();
     void initRosPub();
     void timerGetDataSteadyCallBack(const ros::SteadyTimerEvent &);
