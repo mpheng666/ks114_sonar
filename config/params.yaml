@@ -23,6 +23,6 @@ sonar_remapper: [1] # only one sensor
 detection_mode: 1
 
 # filter configuration
-use_threshold_filter: false
+use_threshold_filter: true
 use_low_pass_filter: true
-low_pass_gain: 0.7
+low_pass_gain: 0.75

@@ -3,10 +3,12 @@
 
 #include "ks114_sonar/ks114_sonar.hpp"
 #include "signal_filter/signal_filter.hpp"
-#include "std_msgs/Float64MultiArray.h"
 #include <boost/range/adaptors.hpp>
+#include <dynamic_reconfigure/server.h>
+#include <ks114_sonar/sonarConfig.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Range.h>
+#include <std_msgs/Float64MultiArray.h>
 
 namespace sensors_manager {
 static constexpr std::array<std::string_view, 8> ROBOT_BODY{
@@ -41,6 +43,7 @@ private:
     ros::SteadyTimer get_data_stimer_;
     ros::Timer pub_timer_;
     static constexpr double LOOP_RATE_{20.0};
+    double ros_pub_rate_{10};
 
     // remapper
     static constexpr int MIN_NUMBER_OF_SONAR_{1};
@@ -70,11 +73,18 @@ private:
     bool use_low_pass_filter_{true};
     double low_pass_gain_{0.8};
 
+    // dynamic reconfig server and callback
+    dynamic_reconfigure::Server<ks114_sonar::sonarConfig> sonar_config_server_;
+    dynamic_reconfigure::Server<ks114_sonar::sonarConfig>::CallbackType
+            updateSonarConfig_;
+
     void loadParams();
     void startSensors();
     void initRosPub();
     void timerGetDataSteadyCallBack(const ros::SteadyTimerEvent &);
     void timerPubCallBack(const ros::TimerEvent &);
+    void dynamicReconfigCallBack(ks114_sonar::sonarConfig &config,
+                                 uint32_t level);
 };
 } // namespace sensors_manager
 

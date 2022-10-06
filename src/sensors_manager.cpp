@@ -10,7 +10,9 @@ SensorsManager::SensorsManager(ros::NodeHandle &nh)
               &SensorsManager::timerGetDataSteadyCallBack,
               this)),
       pub_timer_(nh_p_.createTimer(
-              ros::Duration(0.05), &SensorsManager::timerPubCallBack, this))
+              ros::Duration(0.1), &SensorsManager::timerPubCallBack, this)),
+      updateSonarConfig_(boost::bind(
+              &SensorsManager::dynamicReconfigCallBack, this, _1, _2))
 
 {
 }
@@ -22,6 +24,7 @@ void SensorsManager::start()
     loadParams();
     startSensors();
     initRosPub();
+    sonar_config_server_.setCallback(updateSonarConfig_);
     ros::Rate rate = LOOP_RATE_;
     while (ros::ok()) {
         ros::spinOnce();
@@ -224,4 +227,14 @@ void SensorsManager::timerPubCallBack(const ros::TimerEvent &)
         sonars_filtered_pub_.publish(filtered_msgs);
         sonars_data_filtered_prev_ = std::move(filtered_msgs.data);
     }
+}
+
+void SensorsManager::dynamicReconfigCallBack(ks114_sonar::sonarConfig &config,
+                                             uint32_t level)
+{
+    ks114_detection_mode_ =
+            static_cast<ks114_sonar::DetectionMode>(config.detection_mode);
+    use_threshold_filter_ = config.use_threshold_filter;
+    use_low_pass_filter_ = config.use_low_pass_filter;
+    low_pass_gain_ = config.low_pass_gain;
 }
