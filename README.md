@@ -12,8 +12,8 @@
 
 ### ks114_sonar_utility
 
-1. This utility tool is built on top of ks114_sonar library
-2. The configurable parameters:
+- This utility tool is built on top of ks114_sonar library
+- The configurable parameters:
    1. Address
    2. Communication baud rate
    3. Noise suppression level
@@ -22,8 +22,9 @@
 
 ### sonars_manager
 
-1. This package handles multiple sonars from different vendors
-2. It depends on ROS infrastructures
-3. Simple signal filters are implemented
-4. Sonars data is broadcasted to ROS topics with multiple formats
-5. Dynamic reconfiguration is enabled for filter usage and detection mode
+- This package handles multiple sonars from different vendors
+- It depends on ROS infrastructures
+- Simple signal filters are implemented
+- Sonars data is broadcasted to ROS topics with multiple formats
+- Dynamic reconfiguration is enabled for filter usage and detection mode
+
