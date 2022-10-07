@@ -76,7 +76,8 @@ bool Ks114Sonar::setIndex(const int index)
 bool Ks114Sonar::setSerialPort(const std::string &new_port_name)
 {
     if (serial_port_state_ != SerialPortState::PortOpened) {
-        Serial_.setPort(new_port_name);
+        serial_port_ = new_port_name;
+
         return true;
     }
     return false;
@@ -85,7 +86,7 @@ bool Ks114Sonar::setSerialPort(const std::string &new_port_name)
 bool Ks114Sonar::setSerialBaudRate(const int new_baud_rate)
 {
     if (serial_port_state_ != SerialPortState::PortOpened) {
-        Serial_.setBaudrate(new_baud_rate);
+        serial_baud_rate_ = new_baud_rate;
         return true;
     }
     return false;

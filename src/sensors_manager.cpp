@@ -76,13 +76,11 @@ void SensorsManager::loadParams()
             ROS_WARN_STREAM("sonar_remapper is duplicated! Use default: \n1 2 "
                             "3 4 5 6 7 8");
         }
-        else {
-            num_of_sonar_ = sonar_remapper_.size();
-            sonars_data_raw_.resize(num_of_sonar_);
-            sonars_state_.resize(num_of_sonar_);
-            sonars_data_filtered_.resize(num_of_sonar_);
-            sonars_data_filtered_prev_.resize(num_of_sonar_);
-        }
+        num_of_sonar_ = sonar_remapper_.size();
+        sonars_data_raw_.resize(num_of_sonar_);
+        sonars_state_.resize(num_of_sonar_);
+        sonars_data_filtered_.resize(num_of_sonar_);
+        sonars_data_filtered_prev_.resize(num_of_sonar_);
     }
     if (!nh_p_.param("detection_mode", detection_mode_, detection_mode_)) {
         ROS_WARN_STREAM("detection_mode is not set! Use default "
