@@ -8,9 +8,22 @@ Ks114Sonar::Ks114Sonar(const int index,
     : sonar_index_(index), serial_port_(serial_port),
       serial_baud_rate_(serial_baud_rate)
 {
+    sonar_config_.address = SONAR_ADDRESSES.at(index);
 }
 
 Ks114Sonar::~Ks114Sonar() {}
+
+std::vector<uint8_t> Ks114Sonar::getSenseCommand(uint8_t address, DetectionMode mode)
+{
+    static constexpr uint8_t REGISTER_NUM = 0x02;
+    std::vector<uint8_t> sense_command;
+
+    sense_command.emplace_back(sonar_config_.address);
+    sense_command.emplace_back(REGISTER_NUM);
+    sense_command.emplace_back(DETECTION_MODE.at(mode));
+
+    return sense_command;
+}
 
 bool Ks114Sonar::start()
 {

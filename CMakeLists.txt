@@ -9,8 +9,7 @@ endif()
 # set(PROJECT_VERSION_MINOR 1)
 # set(PROJECT_VERSION_PATCH 0)
 # set(PROJECT_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
-
-# include(CTest)
+find_package(Boost)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
@@ -45,16 +44,13 @@ generate_dynamic_reconfigure_options(
   include_directories(${SERIAL_INCLUDE_DIRS})
   link_directories(${SERIAL_LIBRARY_DIRS})
   
-  # signal filter lib
-  add_library(signal_filter src/signal_filter.cpp)
-  
-  
   # ks114 sonar base 
   set(SOURCES1 src/ks114_sonar_node.cpp src/ks114_sonar.cpp)
   add_executable(ks114_sonar_node ${SOURCES1})
   target_link_libraries(ks114_sonar_node
   ${SERIAL_LIBRARIES}
   )
+  
   # ks114 sonar lib
   add_library(ks114_sonar ${SOURCES1})
   target_link_libraries(ks114_sonar ${SERIAL_LIBRARIES})
@@ -67,7 +63,6 @@ generate_dynamic_reconfigure_options(
   ks114_sonar
   )
   
-  
   # sensors manager
   set(SOURCES3 src/sensors_manager_node.cpp src/sensors_manager.cpp)
   add_executable(sensors_manager_node ${SOURCES3})
@@ -76,8 +71,26 @@ generate_dynamic_reconfigure_options(
   ${roscpp_LIBRARIES}
   ${catkin_LIBRARIES}
   ks114_sonar
-  signal_filter
   )
-  
+
+  # # comms_handler_library
+  # add_library(comms_handler_)
+
+  # comms handler
+  add_executable(comms_handler_test_node test/comms_handler_test_node.cpp src/comms_handler.cpp)
+  target_link_libraries(comms_handler_test_node
+  ${roscpp_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  )
+
+  # sensor_reader_node
+  add_executable(sensor_reader_node src/sensor_reader_node.cpp src/sensor_reader.cpp src/comms_handler.cpp src/ks114_sonar.cpp)
+  target_link_libraries(sensor_reader_node
+  ${roscpp_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${SERIAL_LIBRARIES}
+  )
   
   
