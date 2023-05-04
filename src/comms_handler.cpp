@@ -16,7 +16,7 @@ namespace ks114_sonar
                                unsigned int connection_timer_ms = 1000)
         : port_name_(port_name)
         , baud_rate_(baud_rate)
-        , serial_port_(ioc_, port_name_)
+        , serial_port_(ioc_)
         , connection_timer_ms_(connection_timer_ms)
         , connection_handler_cb_timer_(
               ioc_,
