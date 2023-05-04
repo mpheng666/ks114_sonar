@@ -16,7 +16,7 @@ void handler(const boost::system::error_code& error, int signal_number)
 int main(int argc, char** argv)
 {
     boost::asio::io_context ioc;
-    CommsHandler comms_handler("/dev/ttyUSB0", 115200, 1000);
+    CommsHandler comms_handler("/dev/ttyUSB0", 115200, 500);
 
     boost::asio::signal_set signals(ioc, SIGINT);
     signals.async_wait(handler);
@@ -28,9 +28,9 @@ int main(int argc, char** argv)
         {
             std::cout << "i: " << i << "\n";
             using namespace std::chrono_literals;
-            std::this_thread::sleep_for(100ms);
+            std::this_thread::sleep_for(200ms);
             std::vector<uint8_t> req_cmd {0xe8, 0x02, 0xb0};
-            comms_handler.write(req_cmd, 100);
+            comms_handler.write(req_cmd, 200);
         }
     }
     else

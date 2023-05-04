@@ -8,7 +8,7 @@ int main()
     CommsHandler comms("/dev/ttyUSB0", 115200, 500);
     SensorReader reader(comms, sonar);
     reader.start();
-    // reader.read(100, false);
+    // reader.read(400, false);
 
     return 0;
 }

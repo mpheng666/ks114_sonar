@@ -22,7 +22,7 @@ namespace ks114_sonar
         boost::asio::steady_timer read_timer_;
 
         double distance_m_ {0.0};
-        double read_frequency_ms_ {100.0};
+        double read_frequency_ms_ {500.0};
 
         bool establishConnection();
         void readSensor(const boost::system::error_code& ec);
