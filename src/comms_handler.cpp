@@ -2,30 +2,21 @@
 
 namespace ks114_sonar
 {
-    CommsHandler::CommsHandler()
-        : serial_port_(ioc_)
-        , connection_handler_cb_timer_(
-              ioc_,
-              std::chrono::duration(std::chrono::milliseconds(connection_timer_ms_)))
-    {
-        setupSerialPort();
-    }
+    CommsHandler::CommsHandler() { setupSerialPort(); }
 
     CommsHandler::CommsHandler(const std::string& port_name,
                                const unsigned int baud_rate,
-                               unsigned int connection_timer_ms = 1000)
+                               unsigned int connection_timer_ms = 1000,
+                               bool use_autoconnect             = true)
         : port_name_(port_name)
         , baud_rate_(baud_rate)
-        , serial_port_(ioc_)
         , connection_timer_ms_(connection_timer_ms)
-        , connection_handler_cb_timer_(
-              ioc_,
-              std::chrono::duration(std::chrono::milliseconds(connection_timer_ms_)))
+        , use_autoconnect_(use_autoconnect)
     {
         setupSerialPort();
     }
 
-    CommsHandler::~CommsHandler() { ioc_.stop(); }
+    CommsHandler::~CommsHandler() { }
 
     void CommsHandler::setPort(const std::string& port_name, unsigned int baud_rate)
     {
@@ -34,230 +25,129 @@ namespace ks114_sonar
         setupSerialPort();
     }
 
-    bool CommsHandler::start()
-    {
-        target_connection_state_ = ConnectionState::CONNECTED;
-        connection_handler_cb_timer_.expires_after(
-            boost::asio::chrono::milliseconds(static_cast<int>(connection_timer_ms_)));
-        connection_handler_cb_timer_.async_wait(boost::bind(
-            &CommsHandler::handleConnection, this, boost::asio::placeholders::error));
-        std::thread t([&] { ioc_.run(); });
-        t.detach();
-        return !ioc_.stopped();
-    }
-
-    bool CommsHandler::stop()
-    {
-        target_connection_state_ = ConnectionState::NOTCONNECTED;
-        disconnectSerial();
-        ioc_.stop();
-        ioc_.reset();
-        return ioc_.stopped();
-    }
-
-    int CommsHandler::getCurrentConnectionState() const
-    {
-        return static_cast<int>(current_connection_state_);
-    }
-
-    bool CommsHandler::write(const std::vector<uint8_t>& data,
-                             unsigned int expected_return_duration_ms = 0)
-    {
-        if (current_connection_state_ == ConnectionState::CONNECTED)
-        {
-#if DEBUG_TIMER
-            const auto p1 = std::chrono::system_clock::now();
-            std::cout << std::dec
-                      << std::chrono::duration_cast<std::chrono::milliseconds>(
-                             p1.time_since_epoch())
-                             .count()
-                      << " Writing: ";
-#endif
-#if DEBUG_BUFFER
-            std::cout << "Writing: | ";
-            for (const auto& e : data)
-            {
-                std::cout << std::setw(3) << std::hex << unsigned(e) << " | ";
-            }
-            std::cout << "\n";
-#endif
-            boost::system::error_code ec;
-            [[maybe_unused]] auto write_byte =
-                serial_port_.write_some(boost::asio::buffer(data), ec);
-            if (ec)
-            {
-                std::cerr << "Write error: " << ec.message() << "\n";
-                current_connection_state_ = ConnectionState::ERROR;
-                return false;
-            }
-            else
-            {
-#if DEBUG_BUFFER
-                std::cout << "Write size: " << write_byte << "\n";
-#endif
-                boost::asio::steady_timer read_timout_timer(
-                    ioc_,
-                    std::chrono::duration(
-                        std::chrono::milliseconds(expected_return_duration_ms)));
-                read_timout_timer.async_wait(boost::bind(
-                    &CommsHandler::asyncRead, this, boost::asio::placeholders::error));
-
-                return true;
-            }
-        }
-        return false;
-    }
-
-    std::vector<uint8_t> CommsHandler::getReadBuffer()
-    {
-        // std::vector<uint8_t> retval;
-        std::lock_guard<std::mutex> guard(serial_mutex_);
-        const std::vector<uint8_t> retval {read_buff_byte_.begin(),
-                                           read_buff_byte_.end()};
-        read_buff_byte_.clear();
-        return retval;
-    }
-
     void CommsHandler::setupSerialPort()
     {
         try
         {
-            serial_port_.set_option(boost::asio::serial_port_base::baud_rate(baud_rate_));
-            serial_port_.set_option(boost::asio::serial_port_base::character_size(8));
-            serial_port_.set_option(boost::asio::serial_port_base::parity(
-                boost::asio::serial_port_base::parity::none));
-            serial_port_.set_option(boost::asio::serial_port_base::stop_bits(
-                boost::asio::serial_port_base::stop_bits::one));
+            serial_port_.setPort(port_name_);
+            serial_port_.setBaudrate(baud_rate_);
+            serial_port_.setTimeout(10, 1000, 1, 100, 1);
         }
         catch (const std::exception& e)
         {
-            std::cerr << "Serial setup error " << e.what() << '\n';
+            std::cerr << e.what() << '\n';
         }
     }
 
-    void CommsHandler::connectSerial()
+    bool CommsHandler::start() { return connectSerial(); }
+
+    bool CommsHandler::stop() { return disconnectSerial(); }
+
+    bool CommsHandler::isPortOpen() const
     {
-        if (!serial_port_.is_open())
+        return connection_status_ == ConnectionState::CONNECTED;
+    }
+
+    bool CommsHandler::write(const std::vector<uint8_t>& data)
+    {
+        if (connection_status_ != ConnectionState::CONNECTED)
+        {
+            if (use_autoconnect_)
+            {
+                connectSerial();
+            }
+            return false;
+        }
+
+        try
+        {
+            serial_port_.flush();
+            serial_port_.flushOutput();
+            [[maybe_unused]] auto write_byte = serial_port_.write(data);
+            // std::cout << "Written size: " << write_byte << "\n";
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "SERIAL WRITE ERROR: " << e.what() << '\n';
+            connection_status_ = ConnectionState::ERROR;
+            return false;
+        }
+        return true;
+    }
+
+    std::vector<uint8_t> CommsHandler::read()
+    {
+        std::vector<uint8_t> retval {};
+        if (connection_status_ != ConnectionState::CONNECTED)
+        {
+            if (use_autoconnect_)
+            {
+                connectSerial();
+            }
+            return retval;
+        }
+        serial_port_.flush();
+        serial_port_.flushInput();
+
+        if (serial_port_.waitReadable())
         {
             try
             {
-                serial_port_.open(port_name_);
+                serial_port_.read(retval, 100);
             }
             catch (const std::exception& e)
             {
-                std::cerr << "Connection error with port " << port_name_ << " "
-                          << e.what() << '\n';
-                current_connection_state_ = ConnectionState::ERROR;
+                std::cerr << "SERIAL READ ERROR: " << e.what() << '\n';
+                connection_status_ = ConnectionState::ERROR;
+                if (use_autoconnect_)
+                {
+                    connectSerial();
+                }
             }
         }
-        else
+        for (const auto& val : retval)
         {
-            serial_port_.close();
+            std::cout << "Read: " << std::hex << unsigned(val) << "\n";
         }
-        if (serial_port_.is_open())
-        {
-            current_connection_state_ = ConnectionState::CONNECTED;
-        }
+        return retval;
     }
 
-    void CommsHandler::disconnectSerial()
+    bool CommsHandler::connectSerial()
     {
-        if (serial_port_.is_open())
+        int time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::system_clock::now() - last_reconnection_ts_)
+                            .count();
+        if (connection_status_ != ConnectionState::CONNECTED &&
+            time_diff > connection_timer_ms_)
         {
+            std::lock_guard<std::mutex> lg(serial_mutex_);
             try
             {
+                std::cout << "ATTEMPT TO CONNECT SERIAL PORT: " << port_name_ << "\n";
+                last_reconnection_ts_ = std::chrono::system_clock::now();
+                setupSerialPort();
+                serial_port_.open();
+            }
+            catch (const std::exception& e)
+            {
+                std::cerr << "SERIAL OPEN ERROR: " << e.what() << '\n';
                 serial_port_.close();
+                connection_status_ = ConnectionState::ERROR;
             }
-            catch (const std::exception& e)
+            if (serial_port_.isOpen())
             {
-                std::cerr << "Disconnection error:" << e.what() << '\n';
-                current_connection_state_ = ConnectionState::ERROR;
+                std::cout << "SERIAL PORT: " << port_name_ << " CONNECTED \n";
+                connection_status_ = ConnectionState::CONNECTED;
             }
         }
-        if (!serial_port_.is_open())
-        {
-            current_connection_state_ = ConnectionState::NOTCONNECTED;
-        }
+        return connection_status_ == ConnectionState::CONNECTED;
     }
 
-    void CommsHandler::asyncRead([[maybe_unused]] const boost::system::error_code& ec)
+    bool CommsHandler::disconnectSerial()
     {
-        if (current_connection_state_ == ConnectionState::CONNECTED)
-        {
-#if DEBUG_TIMER
-            const auto p1 = std::chrono::system_clock::now();
-            std::cout << std::dec
-                      << std::chrono::duration_cast<std::chrono::milliseconds>(
-                             p1.time_since_epoch())
-                             .count()
-                      << " Async reading \n";
-#endif
-            serial_port_.async_read_some(
-                boost::asio::buffer(read_buff_raw_, READ_BUFFER_SIZE_),
-                boost::bind(&CommsHandler::handleRead,
-                            this,
-                            boost::asio::placeholders::error,
-                            boost::asio::placeholders::bytes_transferred));
-        }
-    }
-
-    void CommsHandler::handleRead(const boost::system::error_code& ec,
-                                  std::size_t bytes_transferred)
-    {
-        std::cout << "handle read \n";
-        std::lock_guard<std::mutex> guard(serial_mutex_);
-        if (ec)
-        {
-            std::cout << "Read error: " << ec.message() << "\n";
-            current_connection_state_ = ConnectionState::ERROR;
-        }
-        else
-        {
-#if DEBUG_BUFFER
-            std::cout << "Read size: " << bytes_transferred << "\n";
-#endif
-            for (unsigned int i = 0; i < bytes_transferred; ++i)
-            {
-                read_buff_byte_.push_back(read_buff_raw_[i]);
-            }
-        }
-    }
-
-    void CommsHandler::handleConnection([
-        [maybe_unused]] const boost::system::error_code& ec)
-    {
-        std::cout << "handle connection \n";
-        std::cout << "ioc running: " << !ioc_.stopped() << "\n";
-        if (target_connection_state_ != current_connection_state_)
-        {
-            switch (target_connection_state_)
-            {
-                case ConnectionState::NOTCONNECTED:
-                    if (current_connection_state_ != ConnectionState::NOTCONNECTED)
-                    {
-                        disconnectSerial();
-                    }
-                    break;
-                case ConnectionState::CONNECTED:
-                    if (current_connection_state_ != ConnectionState::CONNECTED)
-                    {
-                        connectSerial();
-                    }
-                    break;
-                case ConnectionState::ERROR:
-                    if (current_connection_state_ != ConnectionState::ERROR)
-                    {
-                    }
-                    break;
-            }
-        }
-        std::cout << "Current connection: " << static_cast<int>(current_connection_state_)
-                  << "\n";
-        connection_handler_cb_timer_.expires_at(
-            connection_handler_cb_timer_.expiry() +
-            std::chrono::duration(std::chrono::milliseconds(connection_timer_ms_)));
-        connection_handler_cb_timer_.async_wait(
-            boost::bind(&CommsHandler::handleConnection, this, ec));
+        serial_port_.close();
+        connection_status_ = ConnectionState::NOTCONNECTED;
+        return !serial_port_.isOpen();
     }
 
 }  // namespace ks114_sonar
