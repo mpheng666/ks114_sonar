@@ -31,7 +31,7 @@ namespace ks114_sonar
         {
             serial_port_.setPort(port_name_);
             serial_port_.setBaudrate(baud_rate_);
-            serial_port_.setTimeout(10, 1000, 1, 100, 1);
+            serial_port_.setTimeout(10, 50, 1, 100, 1);
         }
         catch (const std::exception& e)
         {

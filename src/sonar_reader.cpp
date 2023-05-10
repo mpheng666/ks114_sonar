@@ -23,7 +23,7 @@ namespace ks114_sonar
         if (comms_handler_.write(sonar_.getSenseCommand(mode)))
         {
             auto result = comms_handler_.read();
-            if (auto distance_m = sonar_.decodeDistance(result))
+            if (auto distance_m = sonar_.decodeDistance(result, mode))
             {
                 return distance_m;
             }

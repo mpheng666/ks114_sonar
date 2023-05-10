@@ -70,7 +70,7 @@ namespace ks114_sonar
         ~Ks114Sonar();
         std::vector<uint8_t> getSenseCommand(DetectionMode mode);
         std::vector<uint8_t> getConfigCommand();
-        std::optional<double> decodeDistance(const std::vector<uint8_t>& data);
+        std::optional<double> decodeDistance(const std::vector<uint8_t>& data, DetectionMode mode);
         std::optional<SonarConfiguration> decodeConfig(const std::vector<uint8_t>& data);
         
         SonarConfiguration sonar_config;

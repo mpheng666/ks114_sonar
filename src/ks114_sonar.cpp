@@ -6,6 +6,7 @@ namespace ks114_sonar
         : sonar_index_(index)
     {
         sonar_config.address = SONAR_ADDRESSES.at(index);
+        std::cout << "Sonar index: " << sonar_index_ << " is created \n";
     }
 
     Ks114Sonar::~Ks114Sonar() { }
@@ -32,25 +33,25 @@ namespace ks114_sonar
         return config_command;
     }
 
-    std::optional<double>
-    Ks114Sonar::decodeDistance(const std::vector<uint8_t>& data)
+    std::optional<double> Ks114Sonar::decodeDistance(const std::vector<uint8_t>& data,
+                                                     DetectionMode mode)
     {
-        if(data.size() != DISTANCE_RAW_BYTE_SIZE_)
+        if (data.size() != DISTANCE_RAW_BYTE_SIZE_)
         {
             return std::nullopt;
         }
         double distance_m {0.0};
         bool success {false};
-        static constexpr int CONVERSION_FACTOR {5800};
-        auto val   = static_cast<uint16_t>(data[0] << 8 | data[1]);
-        distance_m = static_cast<float>(val) / CONVERSION_FACTOR;
+        const int CONVERSION_FACTOR = (mode == DetectionMode::Fast) ? 5800 : 1000;
+        auto val              = static_cast<uint16_t>(data[0] << 8 | data[1]);
+        distance_m            = static_cast<float>(val) / CONVERSION_FACTOR;
         return distance_m;
     }
 
     std::optional<SonarConfiguration>
     Ks114Sonar::decodeConfig(const std::vector<uint8_t>& data)
     {
-        if(data.size() != CONFIG_RAW_BYTE_SIZE_)
+        if (data.size() != CONFIG_RAW_BYTE_SIZE_)
         {
             return std::nullopt;
         }
@@ -63,7 +64,7 @@ namespace ks114_sonar
         config.noise_suppression_level = NOISE_SUPPRESSIONS.at(data.at(6));
         config.beam_angle              = BEAM_ANGLES.at(data.at(7));
         config.error_code              = data.at(8);
-        
+
         return config;
     }
 

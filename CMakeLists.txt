@@ -56,19 +56,18 @@ ${catkin_LIBRARIES}
 ${SERIAL_LIBRARIES}
 )
 
+# sonars_manager_node
+add_executable(sonars_manager_node src/sonars_manager_node.cpp src/sonars_manager.cpp src/sonar_reader.cpp src/comms_handler.cpp src/ks114_sonar.cpp)
+target_link_libraries(sonars_manager_node
+${roscpp_LIBRARIES}
+${catkin_LIBRARIES}
+${SERIAL_LIBRARIES}
+)
+
 # ks114 sonar utility
 # set(SOURCES2 src/ks114_sonar_utility.cpp src/ks114_utility_node.cpp)
 # add_executable(ks114_sonar_utility ${SOURCES2})
 # target_link_libraries(ks114_sonar_utility
-# ks114_sonar
-# )
-
-# sensors manager
-# set(SOURCES3 src/sensors_manager_node.cpp src/sensors_manager.cpp)
-# add_executable(sensors_manager_node ${SOURCES3})
-# target_link_libraries(sensors_manager_node
-# ${roscpp_LIBRARIES}
-# ${catkin_LIBRARIES}
 # ks114_sonar
 # )
 
