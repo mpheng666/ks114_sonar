@@ -6,6 +6,8 @@ namespace ks114_sonar
         : nh_p_(nh)
         , raw_values_pub_(
               nh_p_.advertise<std_msgs::Float64MultiArray>("raw_readings", 10))
+        , filtered_values_pub_(
+              nh_p_.advertise<std_msgs::Float64MultiArray>("filtered_readings", 10))
         , comms_handler_("/dev/ttyUSB0", 115200, 50, true)
     {
         loadParams();
@@ -25,10 +27,10 @@ namespace ks114_sonar
                 }
                 else
                 {
-                    raw_readings.at(i) = 404.0;
+                    raw_readings.at(i) = ERROR_READING_;
                 }
             }
-            pubSonar(raw_readings);
+            pubReadings(raw_readings);
             ros::spinOnce();
         }
     }
@@ -43,13 +45,26 @@ namespace ks114_sonar
         {
             sonars_reader_.emplace_back(sonar, comms_handler_);
         }
+        previous_filtered_values_.resize(sensor_num_);
     }
 
-    void SonarsManager::pubSonar(const std::vector<double>& readings)
+    void SonarsManager::pubReadings(const std::vector<double>& readings)
     {
         std_msgs::Float64MultiArray msg;
         msg.data = readings;
         raw_values_pub_.publish(msg);
+
+        std_msgs::Float64MultiArray filtered_msg;
+        std::transform(previous_filtered_values_.begin(),
+                       previous_filtered_values_.end(),
+                       readings.begin(),
+                       std::back_inserter(filtered_msg.data),
+                       [&](auto prev_val, auto curr_val) {
+                           return (1 - low_pass_gain_) * prev_val +
+                                  low_pass_gain_ * curr_val;
+                       });
+        previous_filtered_values_ = filtered_msg.data;
+        filtered_values_pub_.publish(filtered_msg);
     }
 
 }  // namespace ks114_sonar
