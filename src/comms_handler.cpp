@@ -93,7 +93,8 @@ namespace ks114_sonar
         {
             try
             {
-                serial_port_.read(retval, 100);
+                // serial_port_.read(retval, 100);
+                serial_port_.read(retval, 2);
             }
             catch (const std::exception& e)
             {
