@@ -64,11 +64,12 @@ ${catkin_LIBRARIES}
 ${SERIAL_LIBRARIES}
 )
 
-# ks114 sonar utility
-# set(SOURCES2 src/ks114_sonar_utility.cpp src/ks114_utility_node.cpp)
-# add_executable(ks114_sonar_utility ${SOURCES2})
-# target_link_libraries(ks114_sonar_utility
-# ks114_sonar
-# )
+# ks114 sonar utility_node
+add_executable(ks114_sonar_utility_node src/ks114_sonar_utility.cpp src/ks114_utility_node.cpp src/sonar_reader.cpp src/comms_handler.cpp src/ks114_sonar.cpp)
+target_link_libraries(ks114_sonar_utility_node
+${roscpp_LIBRARIES}
+${catkin_LIBRARIES}
+${SERIAL_LIBRARIES}
+)
 
 

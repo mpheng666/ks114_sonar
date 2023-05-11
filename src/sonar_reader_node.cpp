@@ -4,7 +4,7 @@ int main()
 {
     using namespace ks114_sonar;
     Ks114Sonar sonar(13);
-    CommsHandler comms("/dev/ttyUSB0", 115200, 500, true);
+    CommsHandler comms("/dev/ttyUSB0", 115200, 50, true);
     SonarReader reader(sonar, comms);
     reader.start();
     static constexpr int READ_NUM = 100;

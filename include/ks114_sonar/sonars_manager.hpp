@@ -6,6 +6,7 @@
 #include "ks114_sonar/sonar_reader.hpp"
 
 #include <ros/ros.h>
+#include <std_msgs/Float64MultiArray.h>
 
 namespace ks114_sonar
 {
@@ -22,7 +23,10 @@ namespace ks114_sonar
         std::vector<Ks114Sonar> sonars_;
         std::vector<SonarReader> sonars_reader_;
 
+        int sensor_num_ {8};
+
         void loadParams();
+        void pubSonar(const std::vector<double>& readings);
     };
 }  // namespace ks114_sonar
 

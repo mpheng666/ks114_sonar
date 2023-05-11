@@ -6,11 +6,11 @@ namespace ks114_sonar
 
     CommsHandler::CommsHandler(const std::string& port_name,
                                const unsigned int baud_rate,
-                               unsigned int connection_timer_ms = 1000,
+                               unsigned int serial_timeout_ms = 100,
                                bool use_autoconnect             = true)
         : port_name_(port_name)
         , baud_rate_(baud_rate)
-        , connection_timer_ms_(connection_timer_ms)
+        , serial_timeout_ms_(serial_timeout_ms)
         , use_autoconnect_(use_autoconnect)
     {
         setupSerialPort();
@@ -31,7 +31,7 @@ namespace ks114_sonar
         {
             serial_port_.setPort(port_name_);
             serial_port_.setBaudrate(baud_rate_);
-            serial_port_.setTimeout(10, 50, 1, 100, 1);
+            serial_port_.setTimeout(serial_timeout_ms_, serial_timeout_ms_, 1, serial_timeout_ms_, 1);
         }
         catch (const std::exception& e)
         {
@@ -105,10 +105,10 @@ namespace ks114_sonar
                 }
             }
         }
-        for (const auto& val : retval)
-        {
-            std::cout << "Read: " << std::hex << unsigned(val) << "\n";
-        }
+        // for (const auto& val : retval)
+        // {
+        //     std::cout << "Read: " << std::hex << unsigned(val) << "\n";
+        // }
         return retval;
     }
 
@@ -118,7 +118,7 @@ namespace ks114_sonar
                             std::chrono::system_clock::now() - last_reconnection_ts_)
                             .count();
         if (connection_status_ != ConnectionState::CONNECTED &&
-            time_diff > connection_timer_ms_)
+            time_diff > CONNECTION_TIMER_MS_)
         {
             std::lock_guard<std::mutex> lg(serial_mutex_);
             try

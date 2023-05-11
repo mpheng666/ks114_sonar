@@ -28,7 +28,7 @@ namespace ks114_sonar
 
         CommsHandler(const std::string& port_name,
                      const unsigned int baud_rate,
-                     unsigned int connection_timer_ms,
+                     unsigned int serial_timeout_ms,
                      bool use_autoconnect);
         ~CommsHandler();
 
@@ -44,7 +44,8 @@ namespace ks114_sonar
         unsigned int baud_rate_ {115200};
         ConnectionState connection_status_ {ConnectionState::NOTCONNECTED};
         serial::Serial serial_port_;
-        unsigned int connection_timer_ms_ {1000};
+        unsigned int serial_timeout_ms_ {100};
+        static constexpr int CONNECTION_TIMER_MS_ {1000};
         std::chrono::system_clock::time_point last_reconnection_ts_ {
             std::chrono::system_clock::now()};
         bool use_autoconnect_ {true};

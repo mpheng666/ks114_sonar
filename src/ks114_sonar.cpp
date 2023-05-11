@@ -6,7 +6,7 @@ namespace ks114_sonar
         : sonar_index_(index)
     {
         sonar_config.address = SONAR_ADDRESSES.at(index);
-        std::cout << "Sonar index: " << sonar_index_ << " is created \n";
+        // std::cout << "Sonar index: " << sonar_index_ << " is created \n";
     }
 
     Ks114Sonar::~Ks114Sonar() { }
@@ -33,6 +33,23 @@ namespace ks114_sonar
         return config_command;
     }
 
+    std::array<std::array<uint8_t, 3>, 4>
+    Ks114Sonar::getUpdateAddressCommand(int new_index)
+    {
+        std::array<std::array<uint8_t, 3>, 4> update_command;
+        if(new_index < 1 || new_index > 20)
+        {
+            return update_command;
+        }
+        update_command.at(0) = {sonar_config.address, REGISTER_NUM_, 0X9a};
+        update_command.at(1) = {sonar_config.address, REGISTER_NUM_, 0X92};
+        update_command.at(2) = {sonar_config.address, REGISTER_NUM_, 0X9e};
+        update_command.at(3) = {
+            sonar_config.address, REGISTER_NUM_, SONAR_ADDRESSES.at(new_index)};
+
+        return update_command;
+    }
+
     std::optional<double> Ks114Sonar::decodeDistance(const std::vector<uint8_t>& data,
                                                      DetectionMode mode)
     {
@@ -42,9 +59,9 @@ namespace ks114_sonar
         }
         double distance_m {0.0};
         bool success {false};
-        const int CONVERSION_FACTOR = (mode == DetectionMode::Fast) ? 5800 : 1000;
-        auto val              = static_cast<uint16_t>(data[0] << 8 | data[1]);
-        distance_m            = static_cast<float>(val) / CONVERSION_FACTOR;
+        const double CONVERSION_FACTOR = (mode == DetectionMode::Fast) ? 5800.0 : 1000.0;
+        auto val                       = static_cast<uint16_t>(data[0] << 8 | data[1]);
+        distance_m                     = static_cast<float>(val) / CONVERSION_FACTOR;
         return distance_m;
     }
 

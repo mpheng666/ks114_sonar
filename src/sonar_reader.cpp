@@ -25,9 +25,12 @@ namespace ks114_sonar
             auto result = comms_handler_.read();
             if (auto distance_m = sonar_.decodeDistance(result, mode))
             {
+                // std::cout << "Distance: " << distance_m.value() << "\n";
+
                 return distance_m;
             }
         }
+        // std::cout << "Failed to retrieve distance \n";
         return std::nullopt;
     }
 
