@@ -7,12 +7,13 @@ namespace ks114_sonar
     CommsHandler::CommsHandler(const std::string& port_name,
                                const unsigned int baud_rate,
                                unsigned int serial_timeout_ms = 100,
-                               bool use_autoconnect             = true)
+                               bool use_autoconnect           = true)
         : port_name_(port_name)
         , baud_rate_(baud_rate)
         , serial_timeout_ms_(serial_timeout_ms)
         , use_autoconnect_(use_autoconnect)
     {
+        std::cout << "baudrate: " << baud_rate << " . " << "portname: " << port_name_ << " . " << "timeout: " << serial_timeout_ms_ << "\n";
         setupSerialPort();
     }
 
@@ -25,13 +26,25 @@ namespace ks114_sonar
         setupSerialPort();
     }
 
+    void CommsHandler::setSerialTimeOut(uint32_t timeout_ms)
+    {
+        serial_timeout_ms_ = timeout_ms;
+        setupSerialPort();
+    }
+
+    void CommsHandler::setAutoConnect(bool use_auto_connect)
+    {
+        use_autoconnect_ = use_auto_connect;
+    }
+
     void CommsHandler::setupSerialPort()
     {
         try
         {
             serial_port_.setPort(port_name_);
             serial_port_.setBaudrate(baud_rate_);
-            serial_port_.setTimeout(serial_timeout_ms_, serial_timeout_ms_, 1, serial_timeout_ms_, 1);
+            serial::Timeout to = serial::Timeout::simpleTimeout(serial_timeout_ms_);
+            serial_port_.setTimeout(to);
         }
         catch (const std::exception& e)
         {
@@ -75,7 +88,7 @@ namespace ks114_sonar
         return true;
     }
 
-    std::vector<uint8_t> CommsHandler::read()
+    std::vector<uint8_t> CommsHandler::read(size_t read_size)
     {
         std::vector<uint8_t> retval {};
         if (connection_status_ != ConnectionState::CONNECTED)
@@ -93,8 +106,7 @@ namespace ks114_sonar
         {
             try
             {
-                // serial_port_.read(retval, 100);
-                serial_port_.read(retval, 2);
+                serial_port_.read(retval, read_size);
             }
             catch (const std::exception& e)
             {

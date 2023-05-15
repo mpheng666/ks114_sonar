@@ -4,7 +4,7 @@ namespace ks114_sonar
 {
     KS114SonarUtility::KS114SonarUtility(const std::string& port_name)
         : serial_port_(port_name)
-        , comms_handler_(port_name, baud_rate_, 1000, true)
+        , comms_handler_(port_name, baud_rate_, 200, true)
     {
     }
 
@@ -47,7 +47,7 @@ namespace ks114_sonar
                 std::cout << "Please select number (1~7) \n";
             }
         }
-        UMode_  = static_cast<UtilityMode>(mode);
+        UMode_ = static_cast<UtilityMode>(mode);
         return mode;
     }
 
@@ -80,7 +80,7 @@ namespace ks114_sonar
                 int input = -1;
                 while (input < 1 || input > 20)
                 {
-                    std::cout << "Please input sonar index from (1~20) \n";
+                    std::cout << "Please select a sonar index from (1~20) \n";
                     std::cin >> input;
                     if (input > 0 && input <= 20)
                     {
@@ -103,11 +103,12 @@ namespace ks114_sonar
                     Ks114Sonar sonar(i);
                     auto command = sonar.getConfigCommand();
                     comms_handler_.write(command);
-                    auto read_data = comms_handler_.read();
+                    auto read_data = comms_handler_.read(22);
                     if (auto result = sonar.decodeConfig(read_data))
                     {
-                        std::cout << "Found sonar with index: " << std::dec << i << " at address "
-                                  << std::hex << unsigned(result.value().address) << "\n";
+                        std::cout << "Found sonar with index: " << std::dec << i
+                                  << " at address " << std::hex
+                                  << unsigned(result.value().address) << "\n";
                     }
                 }
                 break;
@@ -124,7 +125,7 @@ namespace ks114_sonar
         int input    = -1;
         while (input < 1 || input > 20)
         {
-            std::cout << "Please input sonar index from (1~20) \n";
+            std::cout << "Please select a sonar index from (1~20) \n";
             std::cin >> input;
             if (input > 0 && input <= 20)
             {
@@ -169,13 +170,11 @@ namespace ks114_sonar
                 {
                     comms_handler_.start();
                 }
-                comms_handler_.write({commands.at(0).begin(), commands.at(0).end()});
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                comms_handler_.write({commands.at(1).begin(), commands.at(1).end()});
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                comms_handler_.write({commands.at(2).begin(), commands.at(2).end()});
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                comms_handler_.write({commands.at(3).begin(), commands.at(3).end()});
+                for (int i = 0; i < commands.size(); ++i)
+                {
+                    comms_handler_.write({commands.at(i).begin(), commands.at(i).end()});
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                }
                 std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
                 success = true;
@@ -200,137 +199,176 @@ namespace ks114_sonar
         //           << "BAUTRATE_MODIFICATION" << '\n';
         // std::cout << "\n";
 
-        // std::cout << "NOT IMPLEMENTED YET! '\n";
+        std::cout << "NOT IMPLEMENTED YET! NO REASON TO '\n";
         return success;
     }
 
     bool KS114SonarUtility::setNewNoiseSuppressionLevel()
     {
         bool success = false;
-        // std::cout << "Selected mode "
-        //           << "NOISE_SUPPRESSION_MODIFICATION" << '\n';
-        // int i = 1;
-        // for (const auto& [key, value] : ks114_sonar::NOISE_SUPPRESSIONS)
-        // {
-        //     std::cout << " " << i++ << ". " << value << "\n";
-        // }
-        // std::cout << "\n";
-        // std::cout << "The suppression increases with the mode increment \n";
-        // std::cout << "\n";
 
-        // std::cout << "Please insert a new mode! (1~8) \n";
-        // std::cout << "\n";
-        // int new_mode = -1;
+        int input = -1;
+        while (input < 1 || input > 20)
+        {
+            std::cout << "Please select a sonar index from (1~20) \n";
+            std::cin >> input;
+            if (input > 0 && input <= 20)
+            {
+                connected_sonar_index_ = input;
+            }
+        }
 
-        // while (new_mode == -1)
-        // {
-        //     int user_input;
-        //     std::cin >> user_input;
-        //     if (user_input >= 1 && user_input <= 8 && std::cin.good())
-        //     {
-        //         new_mode                 = user_input;
-        //         uint8_t address_cmd_A[3] = {
-        //             sonars_.at(connected_sonar_index_).getSonarConfig().address,
-        //             0x02,
-        //             0x9c};
-        //         uint8_t address_cmd_B[3] = {
-        //             sonars_.at(connected_sonar_index_).getSonarConfig().address,
-        //             0x02,
-        //             0x95};
-        //         uint8_t address_cmd_C[3] = {
-        //             sonars_.at(connected_sonar_index_).getSonarConfig().address,
-        //             0x02,
-        //             0x98};
-        //         auto it = ks114_sonar::NOISE_SUPPRESSIONS.begin();
-        //         std::advance(it, new_mode - 1);
-        //         uint8_t address_cmd_D[3] = {
-        //             sonars_.at(connected_sonar_index_).getSonarConfig().address,
-        //             0x02,
-        //             it->first};
+        Ks114Sonar sonar(connected_sonar_index_);
+        while (!comms_handler_.isPortOpen())
+        {
+            comms_handler_.start();
+        }
+        auto command = sonar.getConfigCommand();
+        comms_handler_.write(command);
+        auto read_data = comms_handler_.read(22);
+        if (auto result = sonar.decodeConfig(read_data))
+        {
+            result.value().printConfig();
+        }
+        else
+        {
+            std::cout << "Could not find sensor! \n";
+        }
 
-        //         sonars_.at(connected_sonar_index_).sendSerialCmd(address_cmd_A);
-        //         sonars_.at(connected_sonar_index_).sendSerialCmd(address_cmd_B);
-        //         sonars_.at(connected_sonar_index_).sendSerialCmd(address_cmd_C);
-        //         sonars_.at(connected_sonar_index_).sendSerialCmd(address_cmd_D);
+        std::cout << "Selected mode "
+                  << "NOISE_SUPPRESSION_MODIFICATION" << '\n';
 
-        //         success = true;
-        //         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        int i = 1;
+        for (const auto& [key, value] : ks114_sonar::NOISE_SUPPRESSIONS)
+        {
+            std::cout << " " << i++ << ". " << value << "\n";
+        }
+        std::cout << "The suppression increases with the mode increment \n";
+        std::cout << "\n";
 
-        //         std::cout << "PLEASE RECONNECT THE POWER OF THE SONAR FOR IT AND "
-        //                      "RUN THE SCRIPT AGAIN TO VERIFY THE NEW CONFIG! \n ";
-        //     }
-        //     else
-        //     {
-        //         std::cin.clear();
-        //         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        //         std::cout << "Please select number (1~6) \n";
-        //     }
-        // }
+        std::cout << "Please insert a new mode! (1~8) \n";
+        std::cout << "\n";
+        int new_mode = -1;
+
+        while (new_mode == -1)
+        {
+            int user_input;
+            std::cin >> user_input;
+            if (user_input >= 1 && user_input <= 8 && std::cin.good())
+            {
+                new_mode = user_input;
+                auto it  = ks114_sonar::NOISE_SUPPRESSIONS.begin();
+                std::advance(it, new_mode - 1);
+
+                std::vector<std::array<uint8_t, 3>> commands(4);
+                commands.at(0) = {SONAR_ADDRESSES.at(connected_sonar_index_), 0x02, 0x9C};
+                commands.at(1) = {SONAR_ADDRESSES.at(connected_sonar_index_), 0x02, 0x95};
+                commands.at(2) = {SONAR_ADDRESSES.at(connected_sonar_index_), 0x02, 0x98};
+                commands.at(3) = {
+                    SONAR_ADDRESSES.at(connected_sonar_index_), 0x02, it->first};
+
+                for (int i = 0; i < commands.size(); ++i)
+                {
+                    comms_handler_.write({commands.at(i).begin(), commands.at(i).end()});
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+                success = true;
+
+                std::cout << "PLEASE RECONNECT THE POWER OF THE SONAR FOR IT AND "
+                             "RUN THE SCRIPT AGAIN TO VERIFY THE NEW CONFIG! \n ";
+            }
+            else
+            {
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << "Please select number (1~6) \n";
+            }
+        }
         return success;
     }
 
     bool KS114SonarUtility::setNewBeamAngleMode()
     {
         bool success = false;
-        // std::cout << "Selected mode "
-        //           << "BEAM_ANGLE_MODIFICATION" << '\n';
-        // int i = 1;
-        // for (const auto& [key, value] : ks114_sonar::BEAM_ANGLES)
-        // {
-        //     std::cout << " " << i++ << ". " << value << "\n";
-        // }
-        // std::cout << "\n";
-        // std::cout << "The beam angles decrease with the mode increment \n";
-        // std::cout << "\n";
 
-        // std::cout << "Please insert a new mode! (1~8) \n";
-        // std::cout << "\n";
-        // int new_mode = -1;
+        int input = -1;
+        while (input < 1 || input > 20)
+        {
+            std::cout << "Please select a sonar index from (1~20) \n";
+            std::cin >> input;
+            if (input > 0 && input <= 20)
+            {
+                connected_sonar_index_ = input;
+            }
+        }
 
-        // while (new_mode == -1)
-        // {
-        //     int user_input;
-        //     std::cin >> user_input;
-        //     if (user_input >= 1 && user_input <= 8 && std::cin.good())
-        //     {
-        //         new_mode                 = user_input;
-        //         uint8_t address_cmd_A[3] = {
-        //             sonars_.at(connected_sonar_index_).getSonarConfig().address,
-        //             0x02,
-        //             0x9c};
-        //         uint8_t address_cmd_B[3] = {
-        //             sonars_.at(connected_sonar_index_).getSonarConfig().address,
-        //             0x02,
-        //             0x95};
-        //         uint8_t address_cmd_C[3] = {
-        //             sonars_.at(connected_sonar_index_).getSonarConfig().address,
-        //             0x02,
-        //             0x98};
-        //         auto it = ks114_sonar::BEAM_ANGLES.begin();
-        //         std::advance(it, new_mode - 1);
-        //         uint8_t address_cmd_D[3] = {
-        //             sonars_.at(connected_sonar_index_).getSonarConfig().address,
-        //             0x02,
-        //             it->first};
+        Ks114Sonar sonar(connected_sonar_index_);
+        while (!comms_handler_.isPortOpen())
+        {
+            comms_handler_.start();
+        }
+        auto command = sonar.getConfigCommand();
+        comms_handler_.write(command);
+        auto read_data = comms_handler_.read(22);
+        if (auto result = sonar.decodeConfig(read_data))
+        {
+            result.value().printConfig();
+        }
+        else
+        {
+            std::cout << "Could not find sensor! \n";
+        }
+        std::cout << "Selected mode "
+                  << "BEAM_ANGLE_MODIFICATION" << '\n';
 
-        //         sonars_.at(connected_sonar_index_).sendSerialCmd(address_cmd_A);
-        //         sonars_.at(connected_sonar_index_).sendSerialCmd(address_cmd_B);
-        //         sonars_.at(connected_sonar_index_).sendSerialCmd(address_cmd_C);
-        //         sonars_.at(connected_sonar_index_).sendSerialCmd(address_cmd_D);
+        int i = 1;
+        for (const auto& [key, value] : ks114_sonar::BEAM_ANGLES)
+        {
+            std::cout << " " << i++ << ". " << value << "\n";
+        }
+        std::cout << "The beam angles decrease with the mode increment \n";
+        std::cout << "\n";
 
-        //         success = true;
-        //         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        std::cout << "Please insert a new mode! (1~8) \n";
+        std::cout << "\n";
+        int new_mode = -1;
 
-        //         std::cout << "PLEASE RECONNECT THE POWER OF THE SONAR FOR IT AND "
-        //                      "RUN THE SCRIPT AGAIN TO VERIFY THE NEW CONFIG! \n ";
-        //     }
-        //     else
-        //     {
-        //         std::cin.clear();
-        //         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        //         std::cout << "Please select number (1~8) \n";
-        //     }
-        // }
+        while (new_mode == -1)
+        {
+            int user_input;
+            std::cin >> user_input;
+            if (user_input >= 1 && user_input <= 8 && std::cin.good())
+            {
+                new_mode = user_input;
+                auto it  = ks114_sonar::BEAM_ANGLES.begin();
+                std::advance(it, new_mode - 1);
+
+                std::vector<std::array<uint8_t, 3>> commands(4);
+                commands.at(0) = {SONAR_ADDRESSES.at(connected_sonar_index_), 0x02, 0x9C};
+                commands.at(1) = {SONAR_ADDRESSES.at(connected_sonar_index_), 0x02, 0x95};
+                commands.at(2) = {SONAR_ADDRESSES.at(connected_sonar_index_), 0x02, 0x98};
+                commands.at(3) = {
+                    SONAR_ADDRESSES.at(connected_sonar_index_), 0x02, it->first};
+
+                for (int i = 0; i < commands.size(); ++i)
+                {
+                    comms_handler_.write({commands.at(i).begin(), commands.at(i).end()});
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+                success = true;
+
+                std::cout << "PLEASE RECONNECT THE POWER OF THE SONAR FOR IT AND "
+                             "RUN THE SCRIPT AGAIN TO VERIFY THE NEW CONFIG! \n ";
+            }
+            else
+            {
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << "Please select number (1~6) \n";
+            }
+        }
         return success;
     }
 

@@ -36,11 +36,13 @@ namespace ks114_sonar
         bool stop();
         bool isPortOpen() const;
         bool write(const std::vector<uint8_t>& data);
-        std::vector<uint8_t> read();
+        std::vector<uint8_t> read(size_t read_size);
         void setPort(const std::string& port_name, unsigned int baud_rate);
+        void setSerialTimeOut(uint32_t timeout_ms);
+        void setAutoConnect(bool use_auto_connect);
 
         private:
-        std::string port_name_ {};
+        std::string port_name_ {"/dev/ttyUSB0"};
         unsigned int baud_rate_ {115200};
         ConnectionState connection_status_ {ConnectionState::NOTCONNECTED};
         serial::Serial serial_port_;

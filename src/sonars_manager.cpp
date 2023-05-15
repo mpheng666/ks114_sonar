@@ -8,8 +8,9 @@ namespace ks114_sonar
               nh_p_.advertise<std_msgs::Float64MultiArray>("raw_readings", 10))
         , filtered_values_pub_(
               nh_p_.advertise<std_msgs::Float64MultiArray>("filtered_readings", 10))
-        , comms_handler_("/dev/ttyUSB0", 115200, 50, true)
+        , comms_handler_()
     {
+        ROS_INFO_STREAM("Started sonars manager!");
         loadParams();
     }
 
@@ -17,11 +18,12 @@ namespace ks114_sonar
     {
         while (ros::ok())
         {
-            std::vector<double> raw_readings(sensor_num_);
-            for (int i = 0; i < sensor_num_; ++i)
+            std::vector<double> raw_readings(sonars_remappper_.size());
+            for (int i = 0; i < sonars_remappper_.size(); ++i)
             {
                 sonars_reader_.at(i).start();
-                if (auto val = sonars_reader_.at(i).getDistance(DetectionMode::Fast))
+                if (auto val = sonars_reader_.at(i).getDistance(
+                        static_cast<DetectionMode>(detection_mode_)))
                 {
                     raw_readings.at(i) = val.value();
                 }
@@ -32,20 +34,61 @@ namespace ks114_sonar
             }
             pubReadings(raw_readings);
             ros::spinOnce();
+            ros::Duration(0.01).sleep();
         }
     }
 
     void SonarsManager::loadParams()
     {
-        for (int i = 0; i < sensor_num_; ++i)
+        if (!nh_p_.param("serial_port", serial_port_name_, serial_port_name_))
         {
-            sonars_.emplace_back(i + 1);
+            ROS_WARN_STREAM("serial_port is not set! Use default " << serial_port_name_);
         }
-        for (auto& sonar : sonars_)
+        else
         {
-            sonars_reader_.emplace_back(sonar, comms_handler_);
+            comms_handler_.setPort(serial_port_name_, BAUDRATE_);
         }
-        previous_filtered_values_.resize(sensor_num_);
+        if (!nh_p_.param("serial_timeout_ms", comms_timeout_ms_, comms_timeout_ms_))
+        {
+            ROS_WARN_STREAM("serial_timeout_ms is not set! Use default "
+                            << comms_timeout_ms_);
+        }
+        else
+        {
+            comms_handler_.setSerialTimeOut(comms_timeout_ms_);
+        }
+        if (!nh_p_.param("detection_mode", detection_mode_, detection_mode_))
+        {
+            ROS_WARN_STREAM("detection_mode is not set! Use default "
+                            << detection_mode_);
+        }
+        if (!nh_p_.param(
+                "use_low_pass_filter", use_low_pass_filter_, use_low_pass_filter_))
+        {
+            ROS_WARN_STREAM("use_low_pass_filter is not set! Use default "
+                            << use_low_pass_filter_);
+        }
+        if (!nh_p_.param("low_pass_gain", low_pass_gain_, low_pass_gain_))
+        {
+            ROS_WARN_STREAM("low_pass_gain is not set! Use default " << low_pass_gain_);
+        }
+
+        if (nh_p_.param("sonar_remapper", sonars_remappper_, sonars_remappper_))
+        {
+            for (int i = 0; i < sonars_remappper_.size(); ++i)
+            {
+                sonars_.emplace_back(sonars_remappper_.at(i));
+            }
+            for (auto& sonar : sonars_)
+            {
+                sonars_reader_.emplace_back(sonar, comms_handler_);
+            }
+            previous_filtered_values_.resize(sonars_remappper_.size());
+        }
+        else
+        {
+            ROS_WARN_STREAM("sonar_remapper is not set!");
+        }
     }
 
     void SonarsManager::pubReadings(const std::vector<double>& readings)

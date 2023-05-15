@@ -37,7 +37,7 @@ namespace ks114_sonar
     Ks114Sonar::getUpdateAddressCommand(int new_index)
     {
         std::array<std::array<uint8_t, 3>, 4> update_command;
-        if(new_index < 1 || new_index > 20)
+        if (new_index < 1 || new_index > 20)
         {
             return update_command;
         }
@@ -70,6 +70,9 @@ namespace ks114_sonar
     {
         if (data.size() != CONFIG_RAW_BYTE_SIZE_)
         {
+            std::cout << "WRONG CONFIG SIZE! "
+                      << "Expected: " << CONFIG_RAW_BYTE_SIZE_
+                      << " Received: " << data.size() << "\n";
             return std::nullopt;
         }
 

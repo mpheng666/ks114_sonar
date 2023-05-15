@@ -1,28 +1,28 @@
 # serial configuration
 serial_port: "/dev/ttyUSB0"
-#serial_port: /dev/serial3by-id/usb-FTDI_FT232R_USB_UART_AB0LYXFN-if00-port0
-serial_baud_rate: 115200
+serial_timeout_ms: 100 # increse if the connection is noisy
 
-#    default                       example_1 
-#     FRONT                          FRONT          
-#    _2___1_                        _14__2_         
-# 3 |       | 8                  9 |       | 5     
-#   |       |                      |       |        
-# 4 |       | 7                  4 |       | 1      
-#    -------                        -------         
-#   5      6                       5      12         
-#     BACK                           BACK     
+#serial_port: /dev/serial3by-id/usb-FTDI_FT232R_USB_UART_AB0LYXFN-if00-port0
+
+#    default          example_1        example_2 
+#     FRONT             FRONT            FRONT         
+#    _2___1_           _14__2_         _1___2_        
+# 3 |       | 8     9 |       | 5     |       |    
+#   |       |         |       |       |       |     
+# 4 |       | 7     4 |       | 1     |       |     
+#    -------           -------         -------        
+#   5      6          5      12        3     4        
+#     BACK              BACK            BACK     
 # Valid index (1~20) depends on the configuration
-sonar_remapper: [3] # only one sensor
-# sonar_remapper: [1,2,3,4,5,6,7,8] # default
+# sonar_remapper: [3] # only one sensor
+sonar_remapper: [1,2,3,4,5,6,7,8] # default
 # sonar_remapper: [2,14,9,4,5,12,1,5] # example_1
+# sonar_remapper: [1,2,3,4] # example_2
 
 # detection_mode: 
 #   0 - normal speed read (0.03m ~ 5.6m)
 #   1 - high speed read (0.01m ~ 1.1m) # recommended
-detection_mode: 1
+detection_mode: 0
 
-# filter configuration
-use_threshold_filter: true
 use_low_pass_filter: true
 low_pass_gain: 0.75

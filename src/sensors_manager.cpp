@@ -37,11 +37,6 @@ void SensorsManager::loadParams()
     if (!nh_p_.param("serial_port", serial_port_, serial_port_)) {
         ROS_WARN_STREAM("serial_port is not set! Use default " << serial_port_);
     }
-    if (!nh_p_.param("serial_baud_rate", serial_baud_rate_,
-                     serial_baud_rate_)) {
-        ROS_WARN_STREAM("serial_baud_rate is not set! Use default "
-                        << serial_baud_rate_);
-    }
     if (!nh_p_.param("sonar_remapper", sonar_remapper_, sonar_remapper_)) {
         ROS_WARN_STREAM(
                 "sonar_remapper is not set! Use default: \n1 2 3 4 5 6 7 8");
